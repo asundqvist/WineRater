@@ -1,0 +1,10 @@
+package se.edugrade.winerater.dto;
+
+public record WineResponse(
+        Long id,
+        String name,
+        String type,
+        String country,
+        int year
+) {
+}
