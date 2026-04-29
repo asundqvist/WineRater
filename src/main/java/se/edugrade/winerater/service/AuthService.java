@@ -39,7 +39,7 @@ public class AuthService {
 
         String token = jwtUtil.generateAccessToken(req.username(), roles);
 
-        return AuthResponse.of(token, jwtUtil.getAccessTokenValiditySeconds());
+        return new AuthResponse(token, req.username(), roles);
     }
 
     public void register(RegisterUserRequest req) {

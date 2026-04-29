@@ -1,12 +1,11 @@
 package se.edugrade.winerater.dto;
 
+import java.util.List;
+
 public record AuthResponse(
-        String accessToken,
-        String tokenType,
-        long expiresIn
+        String token,
+        String username,
+        List<String> roles
 )
 {
-    public static AuthResponse of (String accessToken, long expiresIn) {
-        return new AuthResponse(accessToken, "Bearer", expiresIn);
-    }
 }
