@@ -1,0 +1,12 @@
+se\edugrade\winerater\repositories\WineRepositoryTest.class
+se\edugrade\winerater\service\RatingServiceTest.class
+se\edugrade\winerater\integration\WineRaterIntegrationTest.class
+se\edugrade\winerater\repositories\RatingRepositoryTest.class
+se\edugrade\winerater\service\WineServiceTest.class
+se\edugrade\winerater\controller\AuthControllerTest.class
+se\edugrade\winerater\controller\RatingControllerTest.class
+se\edugrade\winerater\controller\WineControllerTest.class
+se\edugrade\winerater\repositories\UserRepositoryTest.class
+se\edugrade\winerater\service\UserServiceTest.class
+se\edugrade\winerater\service\AuthServiceTest.class
+se\edugrade\winerater\controller\AliveControllerTest.class

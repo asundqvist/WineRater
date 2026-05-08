@@ -2,7 +2,6 @@ se\edugrade\winerater\dto\CreateRatingRequest.class
 se\edugrade\winerater\repositories\UserRepository.class
 se\edugrade\winerater\security\WebConfig.class
 se\edugrade\winerater\Application.class
-se\edugrade\winerater\controller\UserController.class
 se\edugrade\winerater\exception\GlobalExceptionHandler.class
 se\edugrade\winerater\model\Wine.class
 se\edugrade\winerater\dto\UserResponse.class
@@ -23,6 +22,7 @@ se\edugrade\winerater\mapper\RatingMapper.class
 se\edugrade\winerater\repositories\WineRepository.class
 se\edugrade\winerater\exception\ResourceNotFoundException.class
 se\edugrade\winerater\security\JwtUtil.class
+se\edugrade\winerater\service\WineService$WineSummary.class
 se\edugrade\winerater\dto\RatingResponse.class
 se\edugrade\winerater\controller\AuthController.class
 se\edugrade\winerater\dto\RegisterUserRequest.class
@@ -34,6 +34,5 @@ se\edugrade\winerater\model\User.class
 se\edugrade\winerater\service\WineService.class
 se\edugrade\winerater\security\CustomUserDetailsService.class
 se\edugrade\winerater\repositories\RatingRepository.class
-se\edugrade\winerater\dto\LoginRequest.class
 se\edugrade\winerater\dto\WineDetailsResponse.class
 se\edugrade\winerater\mapper\WineMapper.class
