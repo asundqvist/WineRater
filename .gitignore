@@ -946,3 +946,5 @@ CLAUDE.md
 .claude/*
 temp/*
 clean_up/*
+
+target/
