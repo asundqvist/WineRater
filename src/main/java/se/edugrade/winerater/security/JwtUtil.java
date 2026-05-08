@@ -14,19 +14,22 @@ import java.util.List;
 @Component
 public class JwtUtil {
 
-    private static final long ACCESS_TOKEN_VALIDITY = 15 * 60 * 1000; // 15 min
-
     private final SecretKey signingKey;
+    private final long accessTokenValidityMs;
 
-    public JwtUtil(@Value("${jwt.secret}") String secret) {
+    public JwtUtil(
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.expiration:900000}") long accessTokenValidityMs
+    ) {
         this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.accessTokenValidityMs = accessTokenValidityMs;
     }
 
     // 🔐 CREATE TOKEN
     public String generateAccessToken(String username, List<String> roles) {
 
         Date now = new Date();
-        Date expiry = new Date(now.getTime() + ACCESS_TOKEN_VALIDITY);
+        Date expiry = new Date(now.getTime() + accessTokenValidityMs);
 
         return Jwts.builder()
                 .subject(username)
@@ -68,6 +71,6 @@ public class JwtUtil {
     }
 
     public long getAccessTokenValiditySeconds() {
-        return ACCESS_TOKEN_VALIDITY / 1000;
+        return accessTokenValidityMs / 1000;
     }
 }
