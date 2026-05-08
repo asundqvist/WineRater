@@ -2,6 +2,7 @@ package se.edugrade.winerater.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import se.edugrade.winerater.dto.CreateRatingRequest;
 import se.edugrade.winerater.dto.RatingResponse;
@@ -19,12 +20,12 @@ public class RatingController {
     private final RatingService ratingService;
 
     @PostMapping
-    public RatingResponse createRating(@Valid @RequestBody CreateRatingRequest request) {
+    public RatingResponse createRating(@Valid @RequestBody CreateRatingRequest request, Authentication authentication) {
         Rating rating = ratingService.createRating(
                 request.score(),
                 request.comment(),
                 request.wineId(),
-                1L // TODO: Replace with actual user ID from authentication context
+                authentication.getName()
         );
 
         return RatingMapper.toRatingResponse(rating);
