@@ -44,7 +44,7 @@ public class AuthService {
 
     public void register(RegisterUserRequest req) {
 
-        if (userRepository.existsByUsername(req.username())) {
+        if (userRepository.existsByUsernameIgnoreCase(req.username())) {
             throw new BadRequestException("Username is already in use");
         }
 
