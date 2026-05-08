@@ -7,13 +7,15 @@ import se.edugrade.winerater.model.Wine;
 
 public class WineMapper {
 
-    public static WineResponse toWineResponse(Wine wine) {
+    public static WineResponse toWineResponse(Wine wine, double averageRating, int ratingCount) {
         return new WineResponse(
                 wine.getId(),
                 wine.getName(),
                 wine.getType(),
                 wine.getCountry(),
-                wine.getYear()
+                wine.getYear(),
+                averageRating,
+                ratingCount
         );
     }
 
@@ -33,10 +35,10 @@ public class WineMapper {
 
     public static Wine toWine(CreateWineRequest request) {
         return new Wine(
-        request.name(),
-        request.type(),
-        request.country(),
-        request.year()
-                );
+                request.name(),
+                request.type(),
+                request.country(),
+                request.year()
+        );
     }
 }

@@ -1,7 +1,5 @@
 package se.edugrade.winerater.dto;
 
-import se.edugrade.winerater.model.Rating;
-
 import java.util.List;
 
 public record WineDetailsResponse(

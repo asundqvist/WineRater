@@ -5,6 +5,8 @@ public record WineResponse(
         String name,
         String type,
         String country,
-        int year
+        int year,
+        double averageRating,
+        int ratingCount
 ) {
 }
