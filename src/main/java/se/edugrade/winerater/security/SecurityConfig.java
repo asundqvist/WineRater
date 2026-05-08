@@ -34,6 +34,7 @@ public class SecurityConfig {
     private static final String ALL = "/**";
     private static final String WINES = "/wines";
     private static final String RATINGS = "/ratings";
+    private static final String WEATHER = "/weather";
     private static final String API = "/api";
 
     @Bean
@@ -59,6 +60,7 @@ public class SecurityConfig {
                                 new AuthorizationDecision(h2ConsoleEnabled))
                         .requestMatchers(HttpMethod.GET, API + WINES + ALL).permitAll()
                         .requestMatchers(HttpMethod.GET, API + RATINGS + ALL).permitAll()
+                        .requestMatchers(HttpMethod.GET, API + WEATHER + ALL).permitAll()
                         .requestMatchers(HttpMethod.PUT, API + WINES + ALL).hasRole(ADMIN)
                         .requestMatchers(HttpMethod.DELETE, API + WINES + ALL).hasRole(ADMIN)
                         .requestMatchers(HttpMethod.POST, API + RATINGS + ALL).hasAnyRole(USER, ADMIN)
