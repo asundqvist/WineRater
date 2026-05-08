@@ -27,7 +27,7 @@ DELETE /api/wines/{id}
 POST   /api/ratings
 GET    /api/ratings/wine/{wineId}
 GET    /
-GET    /api/weather?city=Goteborg
+GET    /api/weather?city=Toledo
 ```
 
 ## Säkerhet
@@ -52,7 +52,8 @@ Flödet är:
 3. Backend hämtar nuvarande väder och tre dagars prognos via Open-Meteo Forecast API.
 4. Frontend visar resultatet.
 
-Default stad är `Goteborg` om ingen `city` anges.
+Default stad är `Toledo` i Spanien om ingen `city` anges.
+För defaultstaden skickar backend med landskod `ES` till Open-Meteo.
 Stadssökningen normaliseras i backend, så `Stockholm`, `stockholm` och `STOCKHOLM` behandlas likadant.
 
 Exempel:
