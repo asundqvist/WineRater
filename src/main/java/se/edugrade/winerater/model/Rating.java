@@ -1,14 +1,14 @@
 package se.edugrade.winerater.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Data
+@Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"wine_id", "user_id"})})
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Rating {
@@ -21,12 +21,12 @@ public class Rating {
     private String comment;
     private LocalDateTime createdAt;
 
-    @ManyToOne
-    @JoinColumn(name = "wine_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "wine_id", nullable = false)
     private Wine wine;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     public Rating(double score, String comment, Wine wine, User user) {
