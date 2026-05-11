@@ -64,13 +64,15 @@ public class WeatherService {
     }
 
     private Location findLocation(String city) {
+        boolean shouldUseDefaultCountry = DEFAULT_CITY.equalsIgnoreCase(city);
+
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(GEOCODING_URL)
                 .queryParam("name", city)
-                .queryParam("count", 1)
+                .queryParam("count", shouldUseDefaultCountry ? 10 : 1)
                 .queryParam("language", "en")
                 .queryParam("format", "json");
 
-        if (DEFAULT_CITY.equalsIgnoreCase(city)) {
+        if (shouldUseDefaultCountry) {
             uriBuilder.queryParam("countryCode", DEFAULT_COUNTRY_CODE);
         }
 
@@ -83,6 +85,16 @@ public class WeatherService {
             GeocodingApiResponse response = restTemplate.getForObject(uri, GeocodingApiResponse.class);
             if (response == null || response.results() == null || response.results().isEmpty()) {
                 throw new ResourceNotFoundException("City [" + city + "] not found");
+            }
+
+            if (shouldUseDefaultCountry) {
+                return response.results()
+                        .stream()
+                        .filter(location -> DEFAULT_COUNTRY_CODE.equalsIgnoreCase(location.country_code()))
+                        .findFirst()
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "City [" + city + "] not found in country [" + DEFAULT_COUNTRY_CODE + "]"
+                        ));
             }
 
             return response.results().getFirst();
@@ -149,7 +161,7 @@ public class WeatherService {
     private record GeocodingApiResponse(List<Location> results) {
     }
 
-    private record Location(String name, double latitude, double longitude, String country) {
+    private record Location(String name, double latitude, double longitude, String country, String country_code) {
     }
 
     private record ForecastApiResponse(CurrentWeather current, DailyWeather daily) {

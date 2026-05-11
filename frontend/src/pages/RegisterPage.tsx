@@ -1,22 +1,7 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { authService } from '../services/authService'
 import { handleApiError } from '../services/api'
-
-// Password strength checker
-const getPasswordStrength = (pwd: string): { strength: string; color: string; score: number } => {
-  let score = 0
-  if (pwd.length >= 8) score++
-  if (pwd.length >= 12) score++
-  if (/[a-z]/.test(pwd)) score++
-  if (/[A-Z]/.test(pwd)) score++
-  if (/[0-9]/.test(pwd)) score++
-  if (/[^A-Za-z0-9]/.test(pwd)) score++
-
-  if (score <= 2) return { strength: 'Weak', color: 'red', score }
-  if (score <= 4) return { strength: 'Fair', color: 'yellow', score }
-  return { strength: 'Strong', color: 'green', score }
-}
 
 export const RegisterPage = () => {
   const [username, setUsername] = useState('')
@@ -27,26 +12,20 @@ export const RegisterPage = () => {
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
 
-  const passwordStrength = getPasswordStrength(password)
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
     setError('')
     setSuccess('')
 
-    // Validation
-    if (username.length < 3) {
+    const trimmedUsername = username.trim()
+
+    if (trimmedUsername.length < 3) {
       setError('Username must be at least 3 characters')
       return
     }
 
     if (password.length < 6) {
       setError('Password must be at least 6 characters')
-      return
-    }
-
-    if (passwordStrength.score <= 2) {
-      setError('Password is too weak. Use a mix of uppercase, lowercase, numbers, and symbols.')
       return
     }
 
@@ -58,11 +37,9 @@ export const RegisterPage = () => {
     setIsLoading(true)
 
     try {
-      await authService.register({ username, password })
-      setSuccess('Registration successful! Redirecting to login...')
-      setTimeout(() => {
-        navigate('/login')
-      }, 1500)
+      await authService.register({ username: trimmedUsername, password })
+      setSuccess('Account created. Redirecting to login...')
+      window.setTimeout(() => navigate('/login'), 900)
     } catch (err) {
       const apiError = handleApiError(err)
       setError(apiError.message)
@@ -72,164 +49,112 @@ export const RegisterPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
-          <div className="text-center mb-8">
-            <span className="text-4xl block mb-2">🍷</span>
-            <h1 className="text-2xl font-bold text-gray-900">Wine Rater</h1>
-            <p className="text-sm text-gray-600 mt-2">Create a new account</p>
-          </div>
+    <main className="relative isolate flex flex-1 items-center overflow-hidden bg-[#080707] px-4 py-16">
+      <div
+        className="absolute inset-0 -z-20 bg-cover bg-center opacity-35"
+        style={{
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?auto=format&fit=crop&w=1800&q=80')",
+        }}
+      />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#080707] via-[#080707]/95 to-[#080707]/80" />
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+      <section className="mx-auto grid w-full max-w-5xl gap-10 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[#d7a55d]">
+            Wine Rater
+          </p>
+          <h1 className="mt-5 text-5xl font-bold leading-tight text-[#8f2634]">
+            Create your account.
+          </h1>
+          <p className="mt-5 max-w-xl text-lg leading-8 text-[#c9b7ad]">
+            Register a user account to prepare for ratings, saved sessions and
+            role-based actions.
+          </p>
+        </div>
+
+        <div className="border border-[#2a191b] bg-[#0f0c0c]/95 p-6 shadow-2xl shadow-black/30">
+          <h2 className="text-2xl font-bold text-[#9f2f3e]">Register</h2>
+          <p className="mt-2 text-sm text-[#c9b7ad]">Create a Wine Rater user.</p>
+
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              <div className="border border-[#7a1f2b] bg-[#1b1012] px-4 py-3 text-sm text-[#d7a55d]">
                 {error}
               </div>
             )}
 
             {success && (
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+              <div className="border border-[#466b3d] bg-[#111a10] px-4 py-3 text-sm text-[#b9d79f]">
                 {success}
               </div>
             )}
 
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-900 mb-2">
+              <label htmlFor="username" className="block text-sm font-semibold text-[#d7a55d]">
                 Username
               </label>
               <input
                 id="username"
                 type="text"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Choose a username"
+                onChange={(event) => setUsername(event.target.value)}
                 disabled={isLoading}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:bg-gray-50 disabled:cursor-not-allowed text-gray-900"
+                className="mt-2 w-full border border-[#3a2024] bg-[#080707] px-4 py-3 text-[#c9b7ad] outline-none placeholder:text-[#755f61] focus:border-[#7a1f2b]"
+                placeholder="Choose username"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">3-50 characters</p>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-900 mb-2">
+              <label htmlFor="password" className="block text-sm font-semibold text-[#d7a55d]">
                 Password
               </label>
               <input
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter a password"
+                onChange={(event) => setPassword(event.target.value)}
                 disabled={isLoading}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:bg-gray-50 disabled:cursor-not-allowed text-gray-900"
+                className="mt-2 w-full border border-[#3a2024] bg-[#080707] px-4 py-3 text-[#c9b7ad] outline-none placeholder:text-[#755f61] focus:border-[#7a1f2b]"
+                placeholder="At least 6 characters"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">At least 6 characters</p>
-
-              {/* Password Strength Indicator */}
-              {password && (
-                <div className="mt-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium text-gray-700">Strength:</span>
-                    <span
-                      className={`text-xs font-semibold ${
-                        passwordStrength.color === 'red'
-                          ? 'text-red-600'
-                          : passwordStrength.color === 'yellow'
-                          ? 'text-yellow-600'
-                          : 'text-green-600'
-                      }`}
-                    >
-                      {passwordStrength.strength}
-                    </span>
-                  </div>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full transition-all ${
-                        passwordStrength.color === 'red'
-                          ? 'bg-red-500'
-                          : passwordStrength.color === 'yellow'
-                          ? 'bg-yellow-500'
-                          : 'bg-green-500'
-                      }`}
-                      style={{ width: `${(passwordStrength.score / 6) * 100}%` }}
-                    />
-                  </div>
-                  <ul className="text-xs text-gray-600 mt-2 space-y-1 ml-2">
-                    <li className={password.length >= 8 ? 'text-green-600' : ''}>
-                      {password.length >= 8 ? '✓' : '○'} At least 8 characters
-                    </li>
-                    <li className={/[A-Z]/.test(password) ? 'text-green-600' : ''}>
-                      {/[A-Z]/.test(password) ? '✓' : '○'} Uppercase letter
-                    </li>
-                    <li className={/[a-z]/.test(password) ? 'text-green-600' : ''}>
-                      {/[a-z]/.test(password) ? '✓' : '○'} Lowercase letter
-                    </li>
-                    <li className={/[0-9]/.test(password) ? 'text-green-600' : ''}>
-                      {/[0-9]/.test(password) ? '✓' : '○'} Number
-                    </li>
-                    <li
-                      className={
-                        /[^A-Za-z0-9]/.test(password) && password.length >= 6 ? 'text-green-600' : ''
-                      }
-                    >
-                      {/[^A-Za-z0-9]/.test(password) ? '✓' : '○'} Special character (!@#$%^&*)
-                    </li>
-                  </ul>
-                </div>
-              )}
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-900 mb-2">
-                Confirm Password
+              <label htmlFor="confirmPassword" className="block text-sm font-semibold text-[#d7a55d]">
+                Confirm password
               </label>
               <input
                 id="confirmPassword"
                 type="password"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm your password"
+                onChange={(event) => setConfirmPassword(event.target.value)}
                 disabled={isLoading}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:bg-gray-50 disabled:cursor-not-allowed text-gray-900"
+                className="mt-2 w-full border border-[#3a2024] bg-[#080707] px-4 py-3 text-[#c9b7ad] outline-none placeholder:text-[#755f61] focus:border-[#7a1f2b]"
+                placeholder="Repeat password"
                 required
               />
             </div>
 
             <button
               type="submit"
-              disabled={
-                isLoading ||
-                password.length < 6 ||
-                passwordStrength.score <= 2 ||
-                password !== confirmPassword ||
-                username.length < 3
-              }
-              className="w-full bg-gray-900 text-white py-2 rounded-lg font-medium hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              disabled={isLoading}
+              className="w-full rounded-full bg-[#7a1f2b] px-6 py-3 font-semibold text-[#100b0c] hover:bg-[#d7a55d] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isLoading ? 'Creating Account...' : 'Create Account'}
+              {isLoading ? 'Creating account...' : 'Create account'}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link to="/login" className="font-medium text-gray-900 hover:underline">
-                Sign In
-              </Link>
-            </p>
-          </div>
-
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-xs text-blue-800">
-              <strong>🔒 Security Tip:</strong> Use a unique password that you don't use on other websites.
-              Google will warn if your password has been in a data breach - use a stronger, unique password instead.
-            </p>
-          </div>
+          <p className="mt-6 text-center text-sm text-[#c9b7ad]">
+            Already have an account?{' '}
+            <Link to="/login" className="font-semibold text-[#d7a55d] hover:text-[#b84a58]">
+              Sign in
+            </Link>
+          </p>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   )
 }
-

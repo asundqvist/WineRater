@@ -4,6 +4,8 @@ export interface Wine {
   type: string
   country: string
   year: number
+  averageRating: number
+  ratingCount: number
   description?: string
 }
 
@@ -16,6 +18,7 @@ export interface Rating {
   score: number
   comment: string
   createdAt: string
+  username?: string
   user?: {
     id: number
     username: string
@@ -25,6 +28,7 @@ export interface Rating {
 export interface CreateRatingRequest {
   score: number
   comment: string
+  wineId: number
 }
 
 export interface CreateWineRequest {
@@ -55,5 +59,23 @@ export interface User {
 export interface ApiError {
   message: string
   status?: number
+}
+
+export interface DailyWeather {
+  date: string
+  minTemperature: number
+  maxTemperature: number
+  weatherCode: number
+}
+
+export interface Weather {
+  city: string
+  country: string
+  time: string
+  temperature: number
+  windSpeed: number
+  weatherCode: number
+  source: string
+  dailyForecast: DailyWeather[]
 }
 

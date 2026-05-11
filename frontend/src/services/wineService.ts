@@ -16,7 +16,7 @@ export const wineService = {
 
   // Get ratings for a wine
   getWineRatings: async (wineId: number): Promise<Rating[]> => {
-    const response = await api.get(`/wines/${wineId}/ratings`)
+    const response = await api.get(`/ratings/wine/${wineId}`)
     return response.data
   },
 
@@ -33,7 +33,7 @@ export const wineService = {
 
   // Add a rating to a wine
   addRating: async (wineId: number, rating: CreateRatingRequest): Promise<Rating> => {
-    const response = await api.post(`/wines/${wineId}/ratings`, rating)
+    const response = await api.post('/ratings', { ...rating, wineId })
     return response.data
   },
 }

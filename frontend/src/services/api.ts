@@ -1,7 +1,9 @@
 import axios, { AxiosInstance, AxiosError } from 'axios'
 import { ApiError } from '../types'
 
-const API_BASE_URL = 'http://localhost:8080/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api'
+
+export const API_ROOT_URL = API_BASE_URL.replace(/\/api\/?$/, '')
 
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,

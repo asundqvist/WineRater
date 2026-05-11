@@ -1,76 +1,49 @@
 import { Wine } from '../types'
-import { useAuth } from '../hooks/useAuth'
-import { useNavigate } from 'react-router-dom'
 
 interface WineCardProps {
   wine: Wine
-  onDelete?: (id: number) => void
-  onRateClick?: (id: number) => void
-  ratingCount?: number
+  onSelect?: (id: number) => void
+  isSelected?: boolean
 }
 
-export const WineCard = ({ wine, onDelete, onRateClick, ratingCount = 0 }: WineCardProps) => {
-  const { hasRole, isAuthenticated } = useAuth()
-  const navigate = useNavigate()
-  const isAdmin = hasRole('ADMIN')
-
-  const handleRateClick = () => {
-    if (!isAuthenticated) {
-      navigate('/login')
-      return
-    }
-    if (onRateClick) {
-      onRateClick(wine.id)
-    }
+const formatRating = (rating: number) => {
+  if (!rating) {
+    return 'No rating'
   }
 
+  return rating.toFixed(1)
+}
+
+export const WineCard = ({ wine, onSelect, isSelected = false }: WineCardProps) => {
   return (
-    <div className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow border border-gray-200 overflow-hidden">
-      <div className="p-6">
-        <div className="flex justify-between items-start gap-4">
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">{wine.name}</h3>
-            <div className="space-y-1 text-sm text-gray-600">
-              <p>
-                <span className="font-medium">Type:</span> {wine.type}
-              </p>
-              <p>
-                <span className="font-medium">Country:</span> {wine.country}
-              </p>
-              <p>
-                <span className="font-medium">Year:</span> {wine.year}
-              </p>
-            </div>
+    <button
+      type="button"
+      onClick={() => onSelect?.(wine.id)}
+      className={[
+        'w-full border bg-[#100d0d] p-5 text-left hover:border-[#7a1f2b] hover:bg-[#151010]',
+        isSelected ? 'border-[#7a1f2b]' : 'border-[#2a191b]',
+      ].join(' ')}
+    >
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#d7a55d]">
+            {wine.country} / {wine.year}
+          </p>
+          <h2 className="mt-2 text-2xl font-bold text-[#9f2f3e]">{wine.name}</h2>
+          <p className="mt-2 text-sm uppercase tracking-[0.18em] text-[#c9b7ad]">
+            {wine.type}
+          </p>
+        </div>
 
-            {wine.description && (
-              <p className="mt-3 text-gray-700 text-sm">{wine.description}</p>
-            )}
-
-            <div className="mt-4 text-xs text-gray-500">
-              {ratingCount} {ratingCount === 1 ? 'rating' : 'ratings'}
-            </div>
-          </div>
-
-          <div className="flex gap-2 flex-col">
-            {onRateClick && (
-              <button
-                onClick={handleRateClick}
-                className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-sm font-medium whitespace-nowrap"
-              >
-                Add Rating
-              </button>
-            )}
-            {isAdmin && onDelete && (
-              <button
-                onClick={() => onDelete(wine.id)}
-                className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-sm font-medium whitespace-nowrap"
-              >
-                Delete
-              </button>
-            )}
-          </div>
+        <div className="min-w-32 border-l border-[#3a2024] pl-5 sm:text-right">
+          <p className="text-3xl font-bold text-[#d7a55d]">
+            {formatRating(wine.averageRating)}
+          </p>
+          <p className="mt-1 text-sm text-[#c9b7ad]">
+            {wine.ratingCount} {wine.ratingCount === 1 ? 'rating' : 'ratings'}
+          </p>
         </div>
       </div>
-    </div>
+    </button>
   )
 }

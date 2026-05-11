@@ -1,7 +1,10 @@
 import api from './api'
+import { API_ROOT_URL } from './api'
 import { LoginRequest, AuthResponse, User } from '../types'
 
-const AUTH_BASE_URL = 'http://localhost:8080/auth'
+export const AUTH_STATE_CHANGE_EVENT = 'winerater-auth-state-change'
+
+const AUTH_BASE_URL = import.meta.env.VITE_AUTH_BASE_URL ?? `${API_ROOT_URL}/auth`
 
 export interface RegisterRequest {
   username: string
@@ -23,9 +26,11 @@ export const authService = {
     // Store token and user info
     localStorage.setItem('token', data.token)
     localStorage.setItem('user', JSON.stringify({
+      id: 0,
       username: data.username,
       roles: data.roles,
     }))
+    window.dispatchEvent(new Event(AUTH_STATE_CHANGE_EVENT))
 
     return data
   },
@@ -34,6 +39,7 @@ export const authService = {
   logout: (): void => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
+    window.dispatchEvent(new Event(AUTH_STATE_CHANGE_EVENT))
   },
 
   // Get current user

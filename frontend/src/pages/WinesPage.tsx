@@ -1,31 +1,72 @@
-import { useState, useEffect } from 'react'
-import { Wine, CreateWineRequest, CreateRatingRequest, Rating } from '../types'
+import { useEffect, useMemo, useState } from 'react'
+import { CreateWineRequest, Rating, Wine } from '../types'
 import { wineService } from '../services/wineService'
 import { WineCard } from '../components/WineCard'
-import { RatingList } from '../components/RatingList'
-import { useAuth } from '../hooks/useAuth'
 import { handleApiError } from '../services/api'
+import { useAuth } from '../hooks/useAuth'
+
+const normalize = (value: string | number) => value.toString().toLowerCase().trim()
+const PAGE_SIZE = 10
+const WINE_TYPES = [
+  { value: 'Red', label: 'Red' },
+  { value: 'White', label: 'White' },
+  { value: 'Rose', label: 'Rosé' },
+  { value: 'Sparkling', label: 'Sparkling' },
+]
 
 export const WinesPage = () => {
   const [wines, setWines] = useState<Wine[]>([])
-  const [isLoadingWines, setIsLoadingWines] = useState(true)
-  const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [typeFilter, setTypeFilter] = useState('all')
+  const [countryFilter, setCountryFilter] = useState('all')
+  const [currentPage, setCurrentPage] = useState(1)
   const [selectedWineId, setSelectedWineId] = useState<number | null>(null)
-  const [wineRatings, setWineRatings] = useState<Rating[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSavingWine, setIsSavingWine] = useState(false)
+  const [isSavingRating, setIsSavingRating] = useState(false)
   const [isLoadingRatings, setIsLoadingRatings] = useState(false)
   const [showAddWine, setShowAddWine] = useState(false)
-  const [showAddRating, setShowAddRating] = useState(false)
-  const { user, isAuthenticated } = useAuth()
+  const [showRatingForm, setShowRatingForm] = useState(false)
+  const [showRatings, setShowRatings] = useState(false)
+  const [ratings, setRatings] = useState<Rating[]>([])
+  const [ratingScore, setRatingScore] = useState('5.0')
+  const [ratingComment, setRatingComment] = useState('')
+  const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+  const [isFeedbackVisible, setIsFeedbackVisible] = useState(false)
+  const { isAuthenticated } = useAuth()
 
-  // Load wines on mount
   useEffect(() => {
     loadWines()
   }, [])
 
+  useEffect(() => {
+    if (!error && !successMessage) {
+      setIsFeedbackVisible(false)
+      return
+    }
+
+    setIsFeedbackVisible(true)
+
+    const fadeTimeoutId = window.setTimeout(() => {
+      setIsFeedbackVisible(false)
+    }, 3500)
+
+    const removeTimeoutId = window.setTimeout(() => {
+      setError('')
+      setSuccessMessage('')
+    }, 4000)
+
+    return () => {
+      window.clearTimeout(fadeTimeoutId)
+      window.clearTimeout(removeTimeoutId)
+    }
+  }, [error, successMessage])
+
   const loadWines = async () => {
-    setIsLoadingWines(true)
+    setIsLoading(true)
     setError('')
+
     try {
       const data = await wineService.getAllWines()
       setWines(data)
@@ -33,16 +74,82 @@ export const WinesPage = () => {
       const apiError = handleApiError(err)
       setError(apiError.message)
     } finally {
-      setIsLoadingWines(false)
+      setIsLoading(false)
     }
   }
 
-  const loadWineRatings = async (wineId: number) => {
-    setIsLoadingRatings(true)
+  const handleAddWine = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const form = event.currentTarget
+    setError('')
+    setSuccessMessage('')
+    setIsSavingWine(true)
+
+    const formData = new FormData(form)
+    const wine: CreateWineRequest = {
+      name: String(formData.get('name') ?? '').trim(),
+      type: String(formData.get('type') ?? '').trim(),
+      country: String(formData.get('country') ?? '').trim(),
+      year: Number(formData.get('year')),
+    }
+
     try {
-      const ratings = await wineService.getWineRatings(wineId)
-      setWineRatings(ratings)
-      setSelectedWineId(wineId)
+      const createdWine = await wineService.createWine(wine)
+      setWines((current) => [...current, createdWine])
+      setSelectedWineId(createdWine.id)
+      setShowAddWine(false)
+      form.reset()
+      setSuccessMessage(`${createdWine.name} was added`)
+    } catch (err) {
+      const apiError = handleApiError(err)
+      setError(apiError.message)
+    } finally {
+      setIsSavingWine(false)
+    }
+  }
+
+  const handleAddRating = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!selectedWine) {
+      return
+    }
+
+    setError('')
+    setSuccessMessage('')
+    setIsSavingRating(true)
+
+    try {
+      await wineService.addRating(selectedWine.id, {
+        wineId: selectedWine.id,
+        score: Number(ratingScore),
+        comment: ratingComment.trim(),
+      })
+
+      await loadWines()
+      setSelectedWineId(selectedWine.id)
+      setShowRatingForm(false)
+      setRatingScore('5.0')
+      setRatingComment('')
+      setSuccessMessage(`Rating added for ${selectedWine.name}`)
+      if (showRatings) {
+        await loadRatings(selectedWine.id)
+      }
+    } catch (err) {
+      const apiError = handleApiError(err)
+      setError(apiError.message)
+    } finally {
+      setIsSavingRating(false)
+    }
+  }
+
+  const loadRatings = async (wineId: number) => {
+    setIsLoadingRatings(true)
+    setError('')
+
+    try {
+      const data = await wineService.getWineRatings(wineId)
+      setRatings(data)
+      setShowRatings(true)
     } catch (err) {
       const apiError = handleApiError(err)
       setError(apiError.message)
@@ -51,315 +158,521 @@ export const WinesPage = () => {
     }
   }
 
-  const handleDeleteWine = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this wine?')) {
-      return
-    }
+  const filteredWines = useMemo(() => {
+    const query = normalize(searchTerm)
+    const searchedWines = query
+      ? wines.filter((wine) => normalize(wine.name).includes(query))
+      : wines
+    const visibleWines =
+      typeFilter === 'all'
+        ? searchedWines
+        : searchedWines.filter((wine) => normalize(wine.type) === typeFilter)
+    const countryFilteredWines =
+      countryFilter === 'all'
+        ? visibleWines
+        : visibleWines.filter((wine) => normalize(wine.country) === countryFilter)
 
-    try {
-      await wineService.deleteWine(id)
-      setWines(wines.filter((w) => w.id !== id))
-      setError('')
-    } catch (err) {
-      const apiError = handleApiError(err)
-      setError(apiError.message)
-    }
-  }
+    return [...countryFilteredWines].sort((a, b) => {
+      return b.averageRating - a.averageRating || b.ratingCount - a.ratingCount || a.name.localeCompare(b.name)
+    })
+  }, [countryFilter, searchTerm, typeFilter, wines])
 
-  const handleAddWine = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [countryFilter, searchTerm, typeFilter])
 
-    const newWine: CreateWineRequest = {
-      name: formData.get('name') as string,
-      type: formData.get('type') as string,
-      country: formData.get('country') as string,
-      year: parseInt(formData.get('year') as string),
-      description: (formData.get('description') as string) || undefined,
-    }
-
-    try {
-      const wine = await wineService.createWine(newWine)
-      setWines([...wines, wine])
-      setShowAddWine(false)
-      ;(e.target as HTMLFormElement).reset()
-      setError('')
-    } catch (err) {
-      const apiError = handleApiError(err)
-      setError(apiError.message)
-    }
-  }
-
-  const handleAddRating = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (!selectedWineId) return
-
-    const formData = new FormData(e.currentTarget)
-    const score = formData.get('score') as string
-    const comment = formData.get('comment') as string
-
-    if (!score || !comment) {
-      setError('Please fill in both score and comment')
-      return
-    }
-
-    const rating: CreateRatingRequest = {
-      score: parseInt(score),
-      comment: comment,
-    }
-
-    try {
-      console.log('Adding rating:', rating, 'for wine:', selectedWineId)
-      await wineService.addRating(selectedWineId, rating)
-      await loadWineRatings(selectedWineId)
-      setShowAddRating(false)
-      ;(e.target as HTMLFormElement).reset()
-      setError('')
-    } catch (err) {
-      console.error('Rating error:', err)
-      const apiError = handleApiError(err)
-      setError(apiError.message || 'Failed to add rating')
-    }
-  }
-
-  const filteredWines = wines.filter(
-    (wine) =>
-      wine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      wine.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      wine.country.toLowerCase().includes(searchTerm.toLowerCase())
+  const wineCountries = useMemo(
+    () => Array.from(new Set(wines.map((wine) => wine.country).filter(Boolean)))
+      .sort((a, b) => a.localeCompare(b)),
+    [wines]
   )
 
-  if (isLoadingWines && wines.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600 text-lg">Loading wines...</p>
-        </div>
-      </div>
-    )
-  }
+  const totalPages = Math.max(1, Math.ceil(filteredWines.length / PAGE_SIZE))
+  const pageStartIndex = (currentPage - 1) * PAGE_SIZE
+  const paginatedWines = filteredWines.slice(pageStartIndex, pageStartIndex + PAGE_SIZE)
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [currentPage, totalPages])
+
+  const selectedWine = wines.find((wine) => wine.id === selectedWineId)
+  const hasSearch = searchTerm.trim().length > 0
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Error Alert */}
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-            {error}
-            <button
-              onClick={() => setError('')}
-              className="float-right text-red-600 hover:text-red-800"
-            >
-              ✕
-            </button>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content - Wines List */}
-          <div className="lg:col-span-2">
-            <div className="mb-8">
-              <div className="flex justify-between items-center mb-4">
-                <h1 className="text-3xl font-bold text-gray-900">Wines</h1>
-                {isAuthenticated && user?.roles?.includes('ADMIN') && (
-                  <button
-                    onClick={() => setShowAddWine(!showAddWine)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
-                  >
-                    {showAddWine ? 'Cancel' : '+ Add Wine'}
-                  </button>
-                )}
-              </div>
-
-              {/* Add Wine Form */}
-              {showAddWine && (
-                <div className="bg-white rounded-lg shadow border border-gray-200 p-6 mb-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Add New Wine</h2>
-                  <form onSubmit={handleAddWine} className="space-y-4">
-                    <input
-                      type="text"
-                      name="name"
-                      placeholder="Wine Name"
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 text-gray-900"
-                    />
-                    <input
-                      type="text"
-                      name="type"
-                      placeholder="Type (e.g., Red, White)"
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 text-gray-900"
-                    />
-                    <input
-                      type="text"
-                      name="country"
-                      placeholder="Country"
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 text-gray-900"
-                    />
-                    <input
-                      type="number"
-                      name="year"
-                      placeholder="Year"
-                      required
-                      min="1900"
-                      max={new Date().getFullYear()}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 text-gray-900"
-                    />
-                    <textarea
-                      name="description"
-                      placeholder="Description (optional)"
-                      rows={3}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 text-gray-900"
-                    />
-                    <button
-                      type="submit"
-                      className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-                    >
-                      Add Wine
-                    </button>
-                  </form>
-                </div>
-              )}
-
-              {/* Search */}
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search wines..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-900 placeholder-gray-500"
-                />
-                <span className="absolute right-3 top-3 text-gray-400">🔍</span>
-              </div>
-            </div>
-
-            {/* Wines List */}
-            {isLoadingWines ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500">Loading wines...</p>
-              </div>
-            ) : filteredWines.length === 0 ? (
-              <div className="text-center py-12 bg-white rounded-lg shadow border border-gray-200">
-                <p className="text-gray-500">
-                  {wines.length === 0 ? 'No wines available' : 'No wines match your search'}
+    <main className="flex flex-1 bg-[#080707]">
+      <section className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:px-8">
+        <div>
+          <div className="mb-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[#d7a55d]">
+              Wine List
+            </p>
+            <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <h1 className="text-4xl font-bold text-[#8f2634] sm:text-5xl">
+                  Browse wines
+                </h1>
+                <p className="mt-3 max-w-2xl text-[#c9b7ad]">
+                  Search by wine name. Filter by type or country. Ratings are loaded from
+                  the backend wine summary endpoint.
                 </p>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredWines.map((wine) => (
-                  <WineCard
-                    key={wine.id}
-                    wine={wine}
-                    onDelete={() => handleDeleteWine(wine.id)}
-                    onRateClick={() => {
-                      loadWineRatings(wine.id)
-                      setShowAddRating(true)
-                    }}
-                    ratingCount={
-                      selectedWineId === wine.id ? wineRatings.length : 0
-                    }
-                  />
-                ))}
-              </div>
-            )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (isAuthenticated) {
+                    setShowAddWine((current) => !current)
+                  } else {
+                    setSelectedWineId(null)
+                    setError('Sign in to add a wine')
+                  }
+                }}
+                className="w-fit rounded-full border border-[#7a1f2b] px-5 py-2 text-sm font-semibold text-[#b84a58] hover:border-[#d7a55d] hover:text-[#d7a55d]"
+              >
+                {showAddWine ? 'Close form' : 'Add wine'}
+              </button>
+            </div>
           </div>
 
-          {/* Sidebar - Ratings */}
-          <div>
-            {selectedWineId ? (
-              <div className="bg-white rounded-lg shadow border border-gray-200 p-6 sticky top-6">
-                <div className="flex justify-between items-start mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">Ratings</h2>
-                  <button
-                    onClick={() => setSelectedWineId(null)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    ✕
-                  </button>
+          {showAddWine && isAuthenticated && (
+            <form
+              onSubmit={handleAddWine}
+              className="mb-6 grid gap-4 border border-[#2a191b] bg-[#0f0c0c] p-5 sm:grid-cols-2"
+            >
+              <div className="sm:col-span-2">
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#d7a55d]">
+                  Add wine
+                </p>
+              </div>
+              <WineInput name="name" label="Name" />
+              <div>
+                <label htmlFor="wine-type" className="block text-sm font-semibold text-[#d7a55d]">
+                  Type
+                </label>
+                <select
+                  id="wine-type"
+                  name="type"
+                  required
+                  className="mt-2 w-full border border-[#3a2024] bg-[#080707] px-4 py-3 text-[#c9b7ad] outline-none focus:border-[#7a1f2b]"
+                >
+                  {WINE_TYPES.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <WineInput name="country" label="Country" />
+              <WineInput name="year" label="Year" type="number" />
+              <button
+                type="submit"
+                disabled={isSavingWine}
+                className="rounded-full bg-[#7a1f2b] px-6 py-3 font-semibold text-[#100b0c] hover:bg-[#d7a55d] disabled:cursor-not-allowed disabled:opacity-60 sm:col-span-2"
+              >
+                {isSavingWine ? 'Adding wine...' : 'Save wine'}
+              </button>
+            </form>
+          )}
+
+          <div className="mb-6 grid gap-4 border border-[#2a191b] bg-[#0f0c0c] p-4 lg:grid-cols-[minmax(0,1fr)_220px_220px]">
+            <label htmlFor="wine-search" className="sr-only">
+              Search wines
+            </label>
+            <input
+              id="wine-search"
+              type="search"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search wine name"
+              className="w-full border border-[#3a2024] bg-[#080707] px-4 py-3 text-[#c9b7ad] outline-none placeholder:text-[#755f61] focus:border-[#7a1f2b]"
+            />
+            <div>
+              <label htmlFor="wine-type-filter" className="sr-only">
+                Filter by type
+              </label>
+              <select
+                id="wine-type-filter"
+                value={typeFilter}
+                onChange={(event) => setTypeFilter(event.target.value)}
+                className="w-full border border-[#3a2024] bg-[#080707] px-4 py-3 text-[#c9b7ad] outline-none focus:border-[#7a1f2b]"
+              >
+                <option value="all">All types</option>
+                {WINE_TYPES.map((type) => (
+                  <option key={type.value} value={normalize(type.value)}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="wine-country-filter" className="sr-only">
+                Filter by country
+              </label>
+              <select
+                id="wine-country-filter"
+                value={countryFilter}
+                onChange={(event) => setCountryFilter(event.target.value)}
+                className="w-full border border-[#3a2024] bg-[#080707] px-4 py-3 text-[#c9b7ad] outline-none focus:border-[#7a1f2b]"
+              >
+                <option value="all">All countries</option>
+                {wineCountries.map((country) => (
+                  <option key={country} value={normalize(country)}>
+                    {country}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <p className="-mt-3 mb-4 text-sm italic text-[#d7a55d]">
+            Sorted by top rated
+          </p>
+
+          {error && (
+            <div
+              className={[
+                'mb-6 border border-[#7a1f2b] bg-[#1b1012] px-4 py-3 text-[#d7a55d] transition-opacity duration-500',
+                isFeedbackVisible ? 'opacity-100' : 'opacity-0',
+              ].join(' ')}
+            >
+              <div className="flex items-center justify-between gap-4">
+                <p>{error}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsFeedbackVisible(false)
+                    window.setTimeout(() => setError(''), 500)
+                  }}
+                  className="text-sm font-semibold text-[#b84a58] hover:text-[#d7a55d]"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
+
+          {successMessage && (
+            <div
+              className={[
+                'mb-6 border border-[#466b3d] bg-[#111a10] px-4 py-3 text-[#b9d79f] transition-opacity duration-500',
+                isFeedbackVisible ? 'opacity-100' : 'opacity-0',
+              ].join(' ')}
+            >
+              <div className="flex items-center justify-between gap-4">
+                <p>{successMessage}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsFeedbackVisible(false)
+                    window.setTimeout(() => setSuccessMessage(''), 500)
+                  }}
+                  className="text-sm font-semibold text-[#d7a55d] hover:text-[#b84a58]"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
+
+          {isLoading ? (
+            <div className="border border-[#2a191b] bg-[#0f0c0c] p-10 text-center text-[#c9b7ad]">
+              Loading wines...
+            </div>
+          ) : filteredWines.length === 0 ? (
+            <div className="border border-[#2a191b] bg-[#0f0c0c] p-10 text-center">
+              <p className="text-lg font-semibold text-[#9f2f3e]">
+                {hasSearch ? 'No wines match your search' : 'No wines available'}
+              </p>
+              {hasSearch && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="mt-4 rounded-full border border-[#7a1f2b] px-5 py-2 text-sm font-semibold text-[#b84a58] hover:border-[#d7a55d] hover:text-[#d7a55d]"
+                >
+                  Clear search
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {paginatedWines.map((wine) => (
+                <WineCard
+                  key={wine.id}
+                  wine={wine}
+                  isSelected={selectedWineId === wine.id}
+                  onSelect={(wineId) => {
+                    setSelectedWineId(wineId)
+                    setShowRatingForm(false)
+                    setShowRatings(false)
+                    setRatings([])
+                    setRatingScore('5.0')
+                    setRatingComment('')
+                  }}
+                />
+              ))}
+            </div>
+          )}
+
+          {filteredWines.length > PAGE_SIZE && (
+            <div className="mt-6 flex flex-col gap-4 border border-[#2a191b] bg-[#0f0c0c] p-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-[#c9b7ad]">
+                Showing {pageStartIndex + 1}-{Math.min(pageStartIndex + PAGE_SIZE, filteredWines.length)} of{' '}
+                {filteredWines.length}
+              </p>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                  disabled={currentPage === 1}
+                  className="rounded-full border border-[#7a1f2b] px-4 py-2 text-sm font-semibold text-[#b84a58] hover:border-[#d7a55d] hover:text-[#d7a55d] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Previous
+                </button>
+                <span className="text-sm font-semibold text-[#d7a55d]">
+                  {currentPage} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                  disabled={currentPage === totalPages}
+                  className="rounded-full border border-[#7a1f2b] px-4 py-2 text-sm font-semibold text-[#b84a58] hover:border-[#d7a55d] hover:text-[#d7a55d] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <aside className="h-fit border border-[#2a191b] bg-[#0f0c0c] p-6 lg:sticky lg:top-28">
+          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#d7a55d]">
+            Summary
+          </p>
+
+          <div className="mt-6 grid grid-cols-2 gap-4">
+            <div className="border border-[#2a191b] p-4">
+              <p className="text-3xl font-bold text-[#9f2f3e]">{wines.length}</p>
+              <p className="mt-1 text-sm text-[#c9b7ad]">Total wines</p>
+            </div>
+            <div className="border border-[#2a191b] p-4">
+              <p className="text-3xl font-bold text-[#9f2f3e]">{paginatedWines.length}</p>
+              <p className="mt-1 text-sm text-[#c9b7ad]">On this page</p>
+            </div>
+          </div>
+
+          <div className="mt-6 border-t border-[#2a191b] pt-6">
+            {selectedWine ? (
+              <>
+                <p className="text-sm uppercase tracking-[0.22em] text-[#d7a55d]">
+                  Selected wine
+                </p>
+                <h2 className="mt-3 text-2xl font-bold text-[#9f2f3e]">
+                  {selectedWine.name}
+                </h2>
+                <dl className="mt-5 space-y-3 text-sm text-[#c9b7ad]">
+                  <div className="flex justify-between gap-4">
+                    <dt>Type</dt>
+                    <dd className="font-semibold text-[#d7a55d]">{selectedWine.type}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt>Country</dt>
+                    <dd className="font-semibold text-[#d7a55d]">{selectedWine.country}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt>Year</dt>
+                    <dd className="font-semibold text-[#d7a55d]">{selectedWine.year}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt>Average rating</dt>
+                    <dd className="font-semibold text-[#d7a55d]">
+                      {selectedWine.averageRating
+                        ? selectedWine.averageRating.toFixed(1)
+                        : 'No rating'}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt>Ratings</dt>
+                    <dd className="font-semibold text-[#d7a55d]">{selectedWine.ratingCount}</dd>
+                  </div>
+                </dl>
+
+                <div className="mt-6 border-t border-[#2a191b] pt-6">
+                  <div className="flex flex-col gap-3">
+                    <button
+                      type="button"
+                      onClick={() => loadRatings(selectedWine.id)}
+                      disabled={isLoadingRatings}
+                      className="w-full rounded-full border border-[#7a1f2b] px-6 py-3 font-semibold text-[#b84a58] hover:border-[#d7a55d] hover:text-[#d7a55d] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isLoadingRatings ? 'Loading ratings...' : 'Show ratings'}
+                    </button>
+
+                    {showRatings && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowRatings(false)
+                          setRatings([])
+                        }}
+                        className="w-full text-sm font-semibold text-[#755f61] hover:text-[#d7a55d]"
+                      >
+                        Hide ratings
+                      </button>
+                    )}
+                  </div>
+
+                  {showRatings && (
+                    <div className="mt-5 space-y-3">
+                      {ratings.length === 0 ? (
+                        <div className="border border-[#2a191b] bg-[#080707] p-4 text-sm text-[#c9b7ad]">
+                          No ratings yet.
+                        </div>
+                      ) : (
+                        ratings.map((rating) => (
+                          <div key={rating.id} className="border border-[#2a191b] bg-[#080707] p-4">
+                            <div className="flex items-start justify-between gap-4">
+                              <div>
+                                <p className="text-sm font-semibold text-[#d7a55d]">
+                                  {rating.username || rating.user?.username || 'Unknown user'}
+                                </p>
+                                {rating.comment && (
+                                  <p className="mt-2 text-sm leading-6 text-[#c9b7ad]">
+                                    {rating.comment}
+                                  </p>
+                                )}
+                              </div>
+                              <p className="shrink-0 text-xl font-bold text-[#9f2f3e]">
+                                {Number(rating.score).toFixed(1)}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
 
-                {/* Add Rating Form */}
-                {showAddRating && isAuthenticated && (
-                  <form onSubmit={handleAddRating} className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <h3 className="font-medium text-gray-900 mb-3">Add Your Rating</h3>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Score (1-5)
-                        </label>
-                        <select
-                          name="score"
-                          required
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-gray-900"
-                        >
-                          <option value="">Select score</option>
-                          <option value="1">1 - Poor</option>
-                          <option value="2">2 - Fair</option>
-                          <option value="3">3 - Good</option>
-                          <option value="4">4 - Very Good</option>
-                          <option value="5">5 - Excellent</option>
-                        </select>
-                      </div>
-                      <textarea
-                        name="comment"
-                        placeholder="Your comment (required)"
-                        rows={3}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-gray-900"
-                      />
-                      <div className="flex gap-2">
-                        <button
-                          type="submit"
-                          className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                        >
-                          Submit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowAddRating(false)}
-                          className="flex-1 px-3 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
-                        >
-                          Cancel
-                        </button>
-                      </div>
+                <div className="mt-6 border-t border-[#2a191b] pt-6">
+                  {isAuthenticated ? (
+                    showRatingForm ? (
+                      <form onSubmit={handleAddRating} className="space-y-4">
+                        <h3 className="text-xl font-bold text-[#9f2f3e]">Add rating</h3>
+                        <div>
+                          <label htmlFor="rating-score" className="block text-sm font-semibold text-[#d7a55d]">
+                            Rating
+                          </label>
+                          <input
+                            id="rating-score"
+                            type="number"
+                            min="0"
+                            max="5"
+                            step="0.1"
+                            inputMode="decimal"
+                            value={ratingScore}
+                            onChange={(event) => setRatingScore(event.target.value)}
+                            className="mt-2 w-full border border-[#3a2024] bg-[#080707] px-4 py-3 text-[#c9b7ad] outline-none placeholder:text-[#755f61] focus:border-[#7a1f2b]"
+                            placeholder="0.0 - 5.0"
+                            required
+                          />
+                          <p className="mt-2 text-xs text-[#755f61]">
+                            Use decimal format between 0.0 and 5.0.
+                          </p>
+                        </div>
+
+                        <div>
+                          <label htmlFor="rating-comment" className="block text-sm font-semibold text-[#d7a55d]">
+                            Comment <span className="font-normal text-[#755f61]">(optional)</span>
+                          </label>
+                          <textarea
+                            id="rating-comment"
+                            value={ratingComment}
+                            onChange={(event) => setRatingComment(event.target.value)}
+                            rows={4}
+                            maxLength={200}
+                            placeholder="Write a short rating note"
+                            className="mt-2 w-full resize-none border border-[#3a2024] bg-[#080707] px-4 py-3 text-[#c9b7ad] outline-none placeholder:text-[#755f61] focus:border-[#7a1f2b]"
+                          />
+                        </div>
+
+                        <div className="flex gap-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowRatingForm(false)
+                              setRatingScore('5.0')
+                              setRatingComment('')
+                            }}
+                            className="flex-1 rounded-full border border-[#7a1f2b] px-5 py-3 text-sm font-semibold text-[#b84a58] hover:border-[#d7a55d] hover:text-[#d7a55d]"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={isSavingRating}
+                            className="flex-1 rounded-full bg-[#7a1f2b] px-5 py-3 text-sm font-semibold text-[#100b0c] hover:bg-[#d7a55d] disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {isSavingRating ? 'Saving...' : 'Save rating'}
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowRatingForm(true)}
+                        className="w-full rounded-full bg-[#7a1f2b] px-6 py-3 font-semibold text-[#100b0c] hover:bg-[#d7a55d] disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        Add rating
+                      </button>
+                    )
+                  ) : (
+                    <div className="mt-4 border border-[#2a191b] bg-[#080707] p-4">
+                      <p className="font-semibold text-[#d7a55d]">Sign in to make rating</p>
+                      <p className="mt-2 text-sm text-[#c9b7ad]">
+                        You can browse ratings without an account, but you need
+                        to be signed in to rate a wine.
+                      </p>
                     </div>
-                  </form>
-                )}
-
-                {/* Ratings List */}
-                <RatingList ratings={wineRatings} isLoading={isLoadingRatings} />
-
-                {!showAddRating && wineRatings.length > 0 && isAuthenticated && (
-                  <button
-                    onClick={() => setShowAddRating(true)}
-                    className="w-full mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                  >
-                    Add Rating
-                  </button>
-                )}
-
-                {!isAuthenticated && wineRatings.length > 0 && (
-                  <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-sm text-gray-600 text-center">
-                      <a href="/login" className="text-blue-600 hover:underline font-medium">
-                        Login
-                      </a>{' '}
-                      to add your own rating
-                    </p>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              </>
             ) : (
-              <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-                <p className="text-gray-500 text-center">Select a wine to view and add ratings</p>
-              </div>
+              <p className="text-[#c9b7ad]">
+                Select a wine to see details and add a rating.
+              </p>
             )}
           </div>
-        </div>
-      </div>
-    </div>
+        </aside>
+      </section>
+    </main>
   )
 }
 
+const WineInput = ({
+  label,
+  name,
+  placeholder,
+  type = 'text',
+}: {
+  label: string
+  name: string
+  placeholder?: string
+  type?: string
+}) => (
+  <div>
+    <label htmlFor={`wine-${name}`} className="block text-sm font-semibold text-[#d7a55d]">
+      {label}
+    </label>
+    <input
+      id={`wine-${name}`}
+      name={name}
+      type={type}
+      min={type === 'number' ? 1800 : undefined}
+      max={type === 'number' ? new Date().getFullYear() : undefined}
+      placeholder={placeholder}
+      required
+      className="mt-2 w-full border border-[#3a2024] bg-[#080707] px-4 py-3 text-[#c9b7ad] outline-none placeholder:text-[#755f61] focus:border-[#7a1f2b]"
+    />
+  </div>
+)

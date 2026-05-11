@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { authService } from '../services/authService'
+import { AUTH_STATE_CHANGE_EVENT, authService } from '../services/authService'
 import { User } from '../types'
 
 export const useAuth = () => {
@@ -17,22 +17,26 @@ export const useAuth = () => {
     setUser(storedUser)
   }, [])
 
-  // Listen for storage changes (e.g., from other tabs)
+  // Listen for auth changes from this tab and other tabs.
   useEffect(() => {
-    const handleStorageChange = () => {
+    const syncUser = () => {
       const storedUser = authService.getCurrentUser()
       setUser(storedUser)
     }
 
-    window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
+    window.addEventListener('storage', syncUser)
+    window.addEventListener(AUTH_STATE_CHANGE_EVENT, syncUser)
+
+    return () => {
+      window.removeEventListener('storage', syncUser)
+      window.removeEventListener(AUTH_STATE_CHANGE_EVENT, syncUser)
+    }
   }, [])
 
   const login = async (username: string, password: string) => {
     setIsLoading(true)
     try {
       const response = await authService.login({ username, password })
-      console.log('Login response:', response)
       const newUser: User = {
         username: response.username,
         roles: response.roles,

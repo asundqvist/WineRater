@@ -1,58 +1,70 @@
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { useNavigate } from 'react-router-dom'
 
 export const Navbar = () => {
-  const { user, logout, isAuthenticated } = useAuth()
   const navigate = useNavigate()
+  const { user, logout, isAuthenticated } = useAuth()
 
-  const handleLogout = () => {
-    logout()
-  }
-
-  const handleLogoClick = () => {
-    navigate('/wines')
-  }
+  const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+    [
+      'rounded-full px-4 py-2 text-sm font-semibold uppercase tracking-[0.18em]',
+      'text-[#9f2f3e] hover:bg-[#1c1717] hover:text-[#d7a55d]',
+      isActive ? 'bg-[#211818] text-[#d7a55d]' : '',
+    ].join(' ')
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <nav className="border-b border-[#2a191b] bg-[#090808]/95 backdrop-blur">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex min-h-20 flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between">
           <button
-            onClick={handleLogoClick}
-            className="flex items-center gap-2 hover:opacity-75 cursor-pointer"
+            onClick={() => navigate('/')}
+            className="flex items-center gap-3 text-left"
           >
-            <span className="text-2xl">🍷</span>
-            <span className="font-bold text-xl text-gray-900">Wine Rater</span>
+            <span className="grid h-11 w-11 place-items-center rounded-full border border-[#7a1f2b] bg-[#130f0f] text-sm font-bold text-[#d7a55d]">
+              WR
+            </span>
+            <span className="text-xl font-bold uppercase tracking-[0.26em] text-[#8f2634]">
+              Wine Rater
+            </span>
           </button>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between md:flex-1">
+            <div className="flex flex-wrap gap-2 md:justify-center">
+              <NavLink to="/wines" className={navLinkClass}>
+                Wine List
+              </NavLink>
+              <NavLink to="/vineyards" className={navLinkClass}>
+                Vineyards
+              </NavLink>
+            </div>
+
             {isAuthenticated && user ? (
-              <>
-                <div className="flex items-center gap-3">
-                  <div className="text-sm">
-                    <p className="text-gray-600">Logged in as:</p>
-                    <p className="font-semibold text-gray-900">{user.username}</p>
-                  </div>
-                  {user.roles?.includes('ADMIN') && (
-                    <span className="text-xs bg-purple-100 text-purple-800 px-3 py-1 rounded-full font-medium">
-                      Admin
-                    </span>
-                  )}
-                </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-sm text-[#c9b7ad]">
+                  Signed in as <span className="font-semibold text-[#d7a55d]">{user.username}</span>
+                </span>
                 <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
+                  onClick={logout}
+                  className="rounded-full border border-[#7a1f2b] px-5 py-2 text-sm font-semibold text-[#b84a58] hover:border-[#d7a55d] hover:text-[#d7a55d]"
                 >
                   Logout
                 </button>
-              </>
+              </div>
             ) : (
-              <button
-                onClick={() => navigate('/login')}
-                className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
-              >
-                Login
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => navigate('/login')}
+                  className="rounded-full border border-[#7a1f2b] px-5 py-2 text-sm font-semibold text-[#b84a58] hover:border-[#d7a55d] hover:text-[#d7a55d]"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => navigate('/register')}
+                  className="rounded-full bg-[#7a1f2b] px-5 py-2 text-sm font-semibold text-[#120d0e] hover:bg-[#d7a55d]"
+                >
+                  Register
+                </button>
+              </div>
             )}
           </div>
         </div>

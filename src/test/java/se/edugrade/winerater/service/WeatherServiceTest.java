@@ -82,15 +82,24 @@ class WeatherServiceTest {
     void getWeatherForCityUsesDefaultCityWhenInputIsBlank() {
         server.expect(requestTo(containsString("https://geocoding-api.open-meteo.com/v1/search")))
                 .andExpect(queryParam("name", "toledo"))
+                .andExpect(queryParam("count", "10"))
                 .andExpect(queryParam("countryCode", "ES"))
                 .andRespond(withSuccess("""
                         {
                           "results": [
                             {
                               "name": "Toledo",
+                              "latitude": 41.6639,
+                              "longitude": -83.5552,
+                              "country": "United States",
+                              "country_code": "US"
+                            },
+                            {
+                              "name": "Toledo",
                               "latitude": 39.8581,
                               "longitude": -4.0226,
-                              "country": "Spain"
+                              "country": "Spain",
+                              "country_code": "ES"
                             }
                           ]
                         }

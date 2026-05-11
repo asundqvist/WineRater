@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record CreateRatingRequest(
-        @DecimalMin(value = "1.0", inclusive = true, message = "Score must be at least 1")
+        @DecimalMin(value = "0.0", inclusive = true, message = "Score must be at least 0")
         @DecimalMax(value = "5.0", inclusive = true, message = "Score must be at most 5")
         double score,
 

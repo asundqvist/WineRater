@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { handleApiError } from '../services/api'
 
@@ -11,20 +11,20 @@ export const LoginPage = () => {
   const navigate = useNavigate()
   const { login } = useAuth()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
     setError('')
     setIsLoading(true)
 
     try {
-      const result = await login(username, password)
+      const result = await login(username.trim(), password)
       if (result.success) {
         navigate('/wines')
-      } else {
-        setError(result.error || 'Login failed')
+        return
       }
+
+      setError(result.error || 'Could not sign in')
     } catch (err) {
-      console.error('Login error:', err)
       const apiError = handleApiError(err)
       setError(apiError.message)
     } finally {
@@ -33,50 +33,69 @@ export const LoginPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
-          <div className="text-center mb-8">
-            <span className="text-4xl block mb-2">🍷</span>
-            <h1 className="text-2xl font-bold text-gray-900">Wine Rater</h1>
-            <p className="text-sm text-gray-600 mt-2">Sign in to your account</p>
-          </div>
+    <main className="relative isolate flex flex-1 items-center overflow-hidden bg-[#080707] px-4 py-16">
+      <div
+        className="absolute inset-0 -z-20 bg-cover bg-center opacity-35"
+        style={{
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=1800&q=80')",
+        }}
+      />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#080707] via-[#080707]/95 to-[#080707]/80" />
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+      <section className="mx-auto grid w-full max-w-5xl gap-10 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[#d7a55d]">
+            Wine Rater
+          </p>
+          <h1 className="mt-5 text-5xl font-bold leading-tight text-[#8f2634]">
+            Welcome back.
+          </h1>
+          <p className="mt-5 max-w-xl text-lg leading-8 text-[#c9b7ad]">
+            Sign in to rate wines, keep track of favorites and continue building
+            your wine collection.
+          </p>
+        </div>
+
+        <div className="border border-[#2a191b] bg-[#0f0c0c]/95 p-6 shadow-2xl shadow-black/30">
+          <h2 className="text-2xl font-bold text-[#9f2f3e]">Login</h2>
+          <p className="mt-2 text-sm text-[#c9b7ad]">Use your Wine Rater account.</p>
+
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              <div className="border border-[#7a1f2b] bg-[#1b1012] px-4 py-3 text-sm text-[#d7a55d]">
                 {error}
               </div>
             )}
 
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-900 mb-2">
+              <label htmlFor="username" className="block text-sm font-semibold text-[#d7a55d]">
                 Username
               </label>
               <input
                 id="username"
                 type="text"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter your username"
+                onChange={(event) => setUsername(event.target.value)}
                 disabled={isLoading}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:bg-gray-50 disabled:cursor-not-allowed text-gray-900"
+                className="mt-2 w-full border border-[#3a2024] bg-[#080707] px-4 py-3 text-[#c9b7ad] outline-none placeholder:text-[#755f61] focus:border-[#7a1f2b]"
+                placeholder="Enter username"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-900 mb-2">
+              <label htmlFor="password" className="block text-sm font-semibold text-[#d7a55d]">
                 Password
               </label>
               <input
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
+                onChange={(event) => setPassword(event.target.value)}
                 disabled={isLoading}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:bg-gray-50 disabled:cursor-not-allowed text-gray-900"
+                className="mt-2 w-full border border-[#3a2024] bg-[#080707] px-4 py-3 text-[#c9b7ad] outline-none placeholder:text-[#755f61] focus:border-[#7a1f2b]"
+                placeholder="Enter password"
                 required
               />
             </div>
@@ -84,30 +103,20 @@ export const LoginPage = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gray-900 text-white py-2 rounded-lg font-medium hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              className="w-full rounded-full bg-[#7a1f2b] px-6 py-3 font-semibold text-[#100b0c] hover:bg-[#d7a55d] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isLoading ? 'Signing in...' : 'Sign In'}
+              {isLoading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link to="/register" className="font-medium text-gray-900 hover:underline">
-                Sign Up
-              </Link>
-            </p>
-          </div>
-
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-600">
-              <strong>Demo Account:</strong> Use any credentials from your backend. Make sure the backend is running on
-              http://localhost:8080
-            </p>
-          </div>
+          <p className="mt-6 text-center text-sm text-[#c9b7ad]">
+            No account yet?{' '}
+            <Link to="/register" className="font-semibold text-[#d7a55d] hover:text-[#b84a58]">
+              Register
+            </Link>
+          </p>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   )
 }
-

@@ -18,6 +18,31 @@ Denna del är fortfarande work in progress och ska färdigställas senare. Backe
 - npm
 - Backend körd på `http://localhost:8080`
 
+## Miljövariabler
+
+Frontend läser backendens API-adress från:
+
+```text
+VITE_API_BASE_URL
+VITE_AUTH_BASE_URL
+```
+
+För lokal körning kan värdet vara:
+
+```text
+VITE_API_BASE_URL=http://localhost:8080/api
+VITE_AUTH_BASE_URL=http://localhost:8080/auth
+```
+
+När frontend senare körs via Docker Compose kan värdet i stället peka på backend-servicen, exempelvis:
+
+```text
+VITE_API_BASE_URL=http://backend:8080/api
+VITE_AUTH_BASE_URL=http://backend:8080/auth
+```
+
+Se `.env.example` för exempel.
+
 ## Installera Beroenden
 
 ```powershell
