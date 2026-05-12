@@ -1,4 +1,4 @@
-import api from './api'
+import axios from 'axios'
 import { API_ROOT_URL } from './api'
 import { LoginRequest, AuthResponse, User } from '../types'
 
@@ -6,20 +6,39 @@ export const AUTH_STATE_CHANGE_EVENT = 'winerater-auth-state-change'
 
 const AUTH_BASE_URL = import.meta.env.VITE_AUTH_BASE_URL ?? `${API_ROOT_URL}/auth`
 
+const authApi = axios.create({
+  baseURL: AUTH_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
+
 export interface RegisterRequest {
   username: string
   password: string
 }
 
+interface UsernameAvailabilityResponse {
+  available: boolean
+}
+
 export const authService = {
+  // Check username availability
+  isUsernameAvailable: async (username: string): Promise<boolean> => {
+    const response = await authApi.get<UsernameAvailabilityResponse>('/username-available', {
+      params: { username },
+    })
+    return response.data.available
+  },
+
   // Register
   register: async (credentials: RegisterRequest): Promise<void> => {
-    await api.post(`${AUTH_BASE_URL}/register`, credentials)
+    await authApi.post('/register', credentials)
   },
 
   // Login
   login: async (credentials: LoginRequest): Promise<AuthResponse> => {
-    const response = await api.post(`${AUTH_BASE_URL}/login`, credentials)
+    const response = await authApi.post('/login', credentials)
     const data = response.data
     console.log('Raw API response:', data)
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AUTH_STATE_CHANGE_EVENT, authService } from '../services/authService'
+import { handleApiError } from '../services/api'
 import { User } from '../types'
 
 export const useAuth = () => {
@@ -46,9 +47,10 @@ export const useAuth = () => {
       return { success: true }
     } catch (error) {
       console.error('Auth service login error:', error)
+      const apiError = handleApiError(error)
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Login failed',
+        error: apiError.message,
       }
     } finally {
       setIsLoading(false)

@@ -1,10 +1,6 @@
 package se.edugrade.winerater.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import se.edugrade.winerater.dto.AuthRequest;
@@ -22,24 +18,23 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
     public AuthResponse login(AuthRequest req) {
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.username(), req.password())
-        );
+        User user = userRepository.findByUsernameIgnoreCase(req.username())
+                .orElseThrow(() -> new BadRequestException("Username doesn't exist"));
 
-        List<String> roles = authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .toList();
+        if (!passwordEncoder.matches(req.password(), user.getPassword())) {
+            throw new BadRequestException("Incorrect password");
+        }
 
-        String token = jwtUtil.generateAccessToken(req.username(), roles);
+        List<String> roles = List.of("ROLE_" + user.getRole().name());
+        String token = jwtUtil.generateAccessToken(user.getUsername(), roles);
 
-        return new AuthResponse(token, req.username(), roles);
+        return new AuthResponse(token, user.getUsername(), roles);
     }
 
     public void register(RegisterUserRequest req) {
@@ -55,5 +50,15 @@ public class AuthService {
         );
 
         userRepository.save(user);
+    }
+
+    public boolean isUsernameAvailable(String username) {
+        String trimmedUsername = username == null ? "" : username.trim();
+
+        if (trimmedUsername.length() < 3) {
+            return false;
+        }
+
+        return !userRepository.existsByUsernameIgnoreCase(trimmedUsername);
     }
 }

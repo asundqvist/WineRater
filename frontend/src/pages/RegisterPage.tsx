@@ -10,7 +10,30 @@ export const RegisterPage = () => {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [usernameStatus, setUsernameStatus] = useState('')
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false)
   const navigate = useNavigate()
+
+  const handleUsernameAvailabilityCheck = async () => {
+    const trimmedUsername = username.trim()
+    setUsernameStatus('')
+
+    if (trimmedUsername.length < 3) {
+      setUsernameStatus('Username must be at least 3 characters')
+      return
+    }
+
+    setIsCheckingUsername(true)
+
+    try {
+      const isAvailable = await authService.isUsernameAvailable(trimmedUsername)
+      setUsernameStatus(isAvailable ? 'Username is available' : 'Username is already in use')
+    } catch {
+      setUsernameStatus('Could not check username right now')
+    } finally {
+      setIsCheckingUsername(false)
+    }
+  }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -21,6 +44,11 @@ export const RegisterPage = () => {
 
     if (trimmedUsername.length < 3) {
       setError('Username must be at least 3 characters')
+      return
+    }
+
+    if (usernameStatus === 'Username is already in use') {
+      setError('Username is already in use')
       return
     }
 
@@ -39,7 +67,7 @@ export const RegisterPage = () => {
     try {
       await authService.register({ username: trimmedUsername, password })
       setSuccess('Account created. Redirecting to login...')
-      window.setTimeout(() => navigate('/login'), 900)
+      window.setTimeout(() => navigate('/login'), 4000)
     } catch (err) {
       const apiError = handleApiError(err)
       setError(apiError.message)
@@ -68,8 +96,7 @@ export const RegisterPage = () => {
             Create your account.
           </h1>
           <p className="mt-5 max-w-xl text-lg leading-8 text-[#c9b7ad]">
-            Register a user account to prepare for ratings, saved sessions and
-            role-based actions.
+            Are you a wine-lover? Register an account to become a part of the community!
           </p>
         </div>
 
@@ -94,16 +121,44 @@ export const RegisterPage = () => {
               <label htmlFor="username" className="block text-sm font-semibold text-[#d7a55d]">
                 Username
               </label>
-              <input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                disabled={isLoading}
-                className="mt-2 w-full border border-[#3a2024] bg-[#080707] px-4 py-3 text-[#c9b7ad] outline-none placeholder:text-[#755f61] focus:border-[#7a1f2b]"
-                placeholder="Choose username"
-                required
-              />
+              <div className="mt-2 flex flex-col gap-3 sm:flex-row">
+                <input
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(event) => {
+                    setUsername(event.target.value)
+                    setUsernameStatus('')
+                  }}
+                  disabled={isLoading}
+                  className="w-full border border-[#3a2024] bg-[#080707] px-4 py-3 text-[#c9b7ad] outline-none placeholder:text-[#755f61] focus:border-[#7a1f2b]"
+                  placeholder="Choose username"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={handleUsernameAvailabilityCheck}
+                  disabled={isLoading || isCheckingUsername}
+                  className="shrink-0 rounded-full border border-[#7a1f2b] px-5 py-3 text-sm font-semibold text-[#b84a58] hover:border-[#d7a55d] hover:text-[#d7a55d] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isCheckingUsername ? 'Checking...' : 'Check availability'}
+                </button>
+              </div>
+              {(isCheckingUsername || usernameStatus) && (
+                <p
+                  className={[
+                    'mt-2 text-sm',
+                    usernameStatus === 'Username is available'
+                      ? 'text-[#b9d79f]'
+                      : 'text-[#d7a55d]',
+                    usernameStatus === 'Username is already in use'
+                      ? 'text-[#b84a58]'
+                      : '',
+                  ].join(' ')}
+                >
+                  {isCheckingUsername ? 'Checking username...' : usernameStatus}
+                </p>
+              )}
             </div>
 
             <div>
