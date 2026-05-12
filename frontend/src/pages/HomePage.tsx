@@ -45,8 +45,7 @@ export const HomePage = () => {
             Rate, discover and revisit memorable wines.
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-[#c9b7ad]">
-            A focused wine journal for browsing bottles, comparing ratings and
-            later pairing vineyards with local weather.
+            A focused wine journal for browsing bottles, comparing ratings and exploring vineyards
           </p>
 
           <div className="mt-10 flex flex-wrap gap-4">

@@ -142,7 +142,7 @@ export const VineyardsPage = () => {
               </h1>
               <p className="mt-4 max-w-2xl text-[#c9b7ad]">
                 Explore a few well-known wine estates and see current weather for
-                their nearby cities. Weather data is fetched from the backend.
+                their nearby cities. Info is gathered from Open-Meteo.
               </p>
             </div>
 

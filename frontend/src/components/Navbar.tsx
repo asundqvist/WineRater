@@ -41,7 +41,7 @@ export const Navbar = () => {
             {isAuthenticated && user ? (
               <div className="flex flex-wrap items-center gap-3">
                 <span className="text-sm text-[#c9b7ad]">
-                  Signed in as <span className="font-semibold text-[#d7a55d]">{user.username}</span>
+                  Signed in as: <span className="font-semibold text-[#d7a55d]">{user.username}</span>
                 </span>
                 <button
                   onClick={logout}

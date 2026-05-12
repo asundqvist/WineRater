@@ -67,7 +67,7 @@ export const RegisterPage = () => {
     try {
       await authService.register({ username: trimmedUsername, password })
       setSuccess('Account created. Redirecting to login...')
-      window.setTimeout(() => navigate('/login'), 4000)
+      window.setTimeout(() => navigate('/login'), 3000)
     } catch (err) {
       const apiError = handleApiError(err)
       setError(apiError.message)

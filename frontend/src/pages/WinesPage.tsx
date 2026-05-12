@@ -24,8 +24,10 @@ export const WinesPage = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [isSavingWine, setIsSavingWine] = useState(false)
   const [isSavingRating, setIsSavingRating] = useState(false)
+  const [isDeletingWine, setIsDeletingWine] = useState(false)
   const [isLoadingRatings, setIsLoadingRatings] = useState(false)
   const [showAddWine, setShowAddWine] = useState(false)
+  const [showEditWine, setShowEditWine] = useState(false)
   const [showRatingForm, setShowRatingForm] = useState(false)
   const [showRatings, setShowRatings] = useState(false)
   const [ratings, setRatings] = useState<Rating[]>([])
@@ -34,7 +36,8 @@ export const WinesPage = () => {
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [isFeedbackVisible, setIsFeedbackVisible] = useState(false)
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, hasRole } = useAuth()
+  const isAdmin = hasRole('ROLE_ADMIN')
 
   useEffect(() => {
     loadWines()
@@ -105,6 +108,70 @@ export const WinesPage = () => {
       setError(apiError.message)
     } finally {
       setIsSavingWine(false)
+    }
+  }
+
+  const handleUpdateWine = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!selectedWine) {
+      return
+    }
+
+    const form = event.currentTarget
+    const formData = new FormData(form)
+    const wine: CreateWineRequest = {
+      name: String(formData.get('name') ?? '').trim(),
+      type: String(formData.get('type') ?? '').trim(),
+      country: String(formData.get('country') ?? '').trim(),
+      year: Number(formData.get('year')),
+    }
+
+    setError('')
+    setSuccessMessage('')
+    setIsSavingWine(true)
+
+    try {
+      const updatedWine = await wineService.updateWine(selectedWine.id, wine)
+      setWines((current) => current.map((item) => (item.id === updatedWine.id ? updatedWine : item)))
+      setSelectedWineId(updatedWine.id)
+      setShowEditWine(false)
+      setSuccessMessage(`${updatedWine.name} was updated`)
+    } catch (err) {
+      const apiError = handleApiError(err)
+      setError(apiError.message)
+    } finally {
+      setIsSavingWine(false)
+    }
+  }
+
+  const handleDeleteWine = async () => {
+    if (!selectedWine) {
+      return
+    }
+
+    const shouldDelete = window.confirm(`Delete ${selectedWine.name}? This cannot be undone.`)
+    if (!shouldDelete) {
+      return
+    }
+
+    setError('')
+    setSuccessMessage('')
+    setIsDeletingWine(true)
+
+    try {
+      await wineService.deleteWine(selectedWine.id)
+      setWines((current) => current.filter((wine) => wine.id !== selectedWine.id))
+      setSelectedWineId(null)
+      setShowEditWine(false)
+      setShowRatingForm(false)
+      setShowRatings(false)
+      setRatings([])
+      setSuccessMessage(`${selectedWine.name} was deleted`)
+    } catch (err) {
+      const apiError = handleApiError(err)
+      setError(apiError.message)
+    } finally {
+      setIsDeletingWine(false)
     }
   }
 
@@ -214,8 +281,7 @@ export const WinesPage = () => {
                   Browse wines
                 </h1>
                 <p className="mt-3 max-w-2xl text-[#c9b7ad]">
-                  Search by wine name. Filter by type or country. Ratings are loaded from
-                  the backend wine summary endpoint.
+                  Search wine by name. Filter by type or country.
                 </p>
               </div>
 
@@ -404,6 +470,7 @@ export const WinesPage = () => {
                   isSelected={selectedWineId === wine.id}
                   onSelect={(wineId) => {
                     setSelectedWineId(wineId)
+                    setShowEditWine(false)
                     setShowRatingForm(false)
                     setShowRatings(false)
                     setRatings([])
@@ -497,6 +564,78 @@ export const WinesPage = () => {
                     <dd className="font-semibold text-[#d7a55d]">{selectedWine.ratingCount}</dd>
                   </div>
                 </dl>
+
+                {isAdmin && (
+                  <div className="mt-6 border-t border-[#2a191b] pt-6">
+                    <p className="text-sm uppercase tracking-[0.22em] text-[#d7a55d]">
+                      Admin
+                    </p>
+
+                    {showEditWine ? (
+                      <form onSubmit={handleUpdateWine} className="mt-4 space-y-4">
+                        <WineInput idPrefix="edit-wine" name="name" label="Name" defaultValue={selectedWine.name} />
+                        <div>
+                          <label htmlFor="edit-wine-type" className="block text-sm font-semibold text-[#d7a55d]">
+                            Type
+                          </label>
+                          <select
+                            id="edit-wine-type"
+                            name="type"
+                            required
+                            defaultValue={selectedWine.type}
+                            className="mt-2 w-full border border-[#3a2024] bg-[#080707] px-4 py-3 text-[#c9b7ad] outline-none focus:border-[#7a1f2b]"
+                          >
+                            {WINE_TYPES.map((type) => (
+                              <option key={type.value} value={type.value}>
+                                {type.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <WineInput idPrefix="edit-wine" name="country" label="Country" defaultValue={selectedWine.country} />
+                        <WineInput idPrefix="edit-wine" name="year" label="Year" type="number" defaultValue={selectedWine.year} />
+
+                        <div className="flex gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setShowEditWine(false)}
+                            className="flex-1 rounded-full border border-[#7a1f2b] px-5 py-3 text-sm font-semibold text-[#b84a58] hover:border-[#d7a55d] hover:text-[#d7a55d]"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={isSavingWine}
+                            className="flex-1 rounded-full bg-[#7a1f2b] px-5 py-3 text-sm font-semibold text-[#100b0c] hover:bg-[#d7a55d] disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {isSavingWine ? 'Saving...' : 'Save'}
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <div className="mt-4 grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowEditWine(true)
+                            setShowRatingForm(false)
+                          }}
+                          className="rounded-full border border-[#7a1f2b] px-5 py-3 text-sm font-semibold text-[#b84a58] hover:border-[#d7a55d] hover:text-[#d7a55d]"
+                        >
+                          Edit wine
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleDeleteWine}
+                          disabled={isDeletingWine}
+                          className="rounded-full border border-[#7a1f2b] px-5 py-3 text-sm font-semibold text-[#d7a55d] hover:border-[#b84a58] hover:text-[#b84a58] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {isDeletingWine ? 'Deleting...' : 'Delete'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="mt-6 border-t border-[#2a191b] pt-6">
                   <div className="flex flex-col gap-3">
@@ -653,24 +792,29 @@ const WineInput = ({
   label,
   name,
   placeholder,
+  defaultValue,
+  idPrefix = 'wine',
   type = 'text',
 }: {
   label: string
   name: string
   placeholder?: string
+  defaultValue?: string | number
+  idPrefix?: string
   type?: string
 }) => (
   <div>
-    <label htmlFor={`wine-${name}`} className="block text-sm font-semibold text-[#d7a55d]">
+    <label htmlFor={`${idPrefix}-${name}`} className="block text-sm font-semibold text-[#d7a55d]">
       {label}
     </label>
     <input
-      id={`wine-${name}`}
+      id={`${idPrefix}-${name}`}
       name={name}
       type={type}
       min={type === 'number' ? 1800 : undefined}
       max={type === 'number' ? new Date().getFullYear() : undefined}
       placeholder={placeholder}
+      defaultValue={defaultValue}
       required
       className="mt-2 w-full border border-[#3a2024] bg-[#080707] px-4 py-3 text-[#c9b7ad] outline-none placeholder:text-[#755f61] focus:border-[#7a1f2b]"
     />

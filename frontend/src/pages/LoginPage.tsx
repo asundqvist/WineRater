@@ -49,11 +49,10 @@ export const LoginPage = () => {
             Wine Rater
           </p>
           <h1 className="mt-5 text-5xl font-bold leading-tight text-[#8f2634]">
-            Welcome back.
+            Welcome back!
           </h1>
           <p className="mt-5 max-w-xl text-lg leading-8 text-[#c9b7ad]">
-            Sign in to rate wines, keep track of favorites and continue building
-            your wine collection.
+            Sign in to expand our collection with more wines and ratings!
           </p>
         </div>
 

@@ -26,6 +26,12 @@ export const wineService = {
     return response.data
   },
 
+  // Update a wine
+  updateWine: async (id: number, wine: CreateWineRequest): Promise<Wine> => {
+    const response = await api.put(`/wines/${id}`, wine)
+    return response.data
+  },
+
   // Delete a wine
   deleteWine: async (id: number): Promise<void> => {
     await api.delete(`/wines/${id}`)
