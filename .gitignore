@@ -948,3 +948,8 @@ temp/*
 clean_up/*
 
 target/
+
+# Local secrets
+.env
+.env.*
+!.env.example
