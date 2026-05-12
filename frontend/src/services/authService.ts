@@ -42,9 +42,9 @@ export const authService = {
     const data = response.data
     console.log('Raw API response:', data)
 
-    // Store token and user info
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('user', JSON.stringify({
+    // Store token and user info for the current browser session.
+    sessionStorage.setItem('token', data.token)
+    sessionStorage.setItem('user', JSON.stringify({
       id: 0,
       username: data.username,
       roles: data.roles,
@@ -56,14 +56,14 @@ export const authService = {
 
   // Logout
   logout: (): void => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    sessionStorage.removeItem('token')
+    sessionStorage.removeItem('user')
     window.dispatchEvent(new Event(AUTH_STATE_CHANGE_EVENT))
   },
 
   // Get current user
   getCurrentUser: (): User | null => {
-    const userStr = localStorage.getItem('user')
+    const userStr = sessionStorage.getItem('user')
     if (!userStr) {
       return null
     }
@@ -76,12 +76,12 @@ export const authService = {
 
   // Check if user is authenticated
   isAuthenticated: (): boolean => {
-    return !!localStorage.getItem('token')
+    return !!sessionStorage.getItem('token')
   },
 
   // Get token
   getToken: (): string | null => {
-    return localStorage.getItem('token')
+    return sessionStorage.getItem('token')
   },
 
   // Check if user has a specific role

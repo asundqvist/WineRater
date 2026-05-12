@@ -6,14 +6,14 @@ import { User } from '../types'
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(() => {
-    // Initialize from localStorage immediately
+    // Initialize from sessionStorage immediately
     return authService.getCurrentUser()
   })
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Check localStorage on mount to ensure state is current
+    // Check sessionStorage on mount to ensure state is current
     const storedUser = authService.getCurrentUser()
     setUser(storedUser)
   }, [])
