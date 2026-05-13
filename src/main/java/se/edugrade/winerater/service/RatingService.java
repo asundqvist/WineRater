@@ -45,4 +45,11 @@ public class RatingService {
 
         return ratingRepository.findByWineId(wineId);
     }
+
+    public void deleteRating(Long id) {
+        Rating rating = ratingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Rating with id [" + id + "] not found"));
+
+        ratingRepository.delete(rating);
+    }
 }

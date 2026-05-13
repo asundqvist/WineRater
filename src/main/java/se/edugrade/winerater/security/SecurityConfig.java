@@ -63,6 +63,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, API + WEATHER + ALL).permitAll()
                         .requestMatchers(HttpMethod.PUT, API + WINES + ALL).hasRole(ADMIN)
                         .requestMatchers(HttpMethod.DELETE, API + WINES + ALL).hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.DELETE, API + RATINGS + ALL).hasRole(ADMIN)
                         .requestMatchers(HttpMethod.POST, API + RATINGS + ALL).hasAnyRole(USER, ADMIN)
                         .requestMatchers(HttpMethod.POST, API + WINES + ALL).hasAnyRole(USER, ADMIN)
                         .anyRequest().authenticated()

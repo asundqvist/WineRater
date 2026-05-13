@@ -38,4 +38,10 @@ public class RatingController {
                 .map(RatingMapper::toRatingResponse)
                 .toList();
     }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(org.springframework.http.HttpStatus.NO_CONTENT)
+    public void deleteRating(@PathVariable Long id) {
+        ratingService.deleteRating(id);
+    }
 }

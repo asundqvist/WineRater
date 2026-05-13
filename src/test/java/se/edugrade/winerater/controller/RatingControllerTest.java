@@ -23,6 +23,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -122,6 +124,14 @@ class RatingControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.message").value("Wine with id [99] not found"));
+    }
+
+    @Test
+    void deleteRatingCallsService() throws Exception {
+        mockMvc.perform(delete("/api/ratings/1"))
+                .andExpect(status().isNoContent());
+
+        verify(ratingService).deleteRating(1L);
     }
 
     private static Rating ratingWithId(Long id, double score, String comment, String username) {

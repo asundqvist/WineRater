@@ -108,6 +108,25 @@ class RatingServiceTest {
                 .hasMessage("Wine with id [99] not found");
     }
 
+    @Test
+    void deleteRatingDeletesWhenRatingExists() {
+        Rating rating = new Rating(4.0, "Good", wineWithId(1L, "Rioja"), userWithId(2L, "alice"));
+        when(ratingRepository.findById(10L)).thenReturn(Optional.of(rating));
+
+        ratingService.deleteRating(10L);
+
+        verify(ratingRepository).delete(rating);
+    }
+
+    @Test
+    void deleteRatingThrowsWhenRatingIsMissing() {
+        when(ratingRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> ratingService.deleteRating(99L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Rating with id [99] not found");
+    }
+
     private static Wine wineWithId(Long id, String name) {
         Wine wine = new Wine(name, "Red", "Spain", 2019);
         wine.setId(id);
