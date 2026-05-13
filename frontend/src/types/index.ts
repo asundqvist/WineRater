@@ -2,6 +2,7 @@ export interface Wine {
   id: number
   name: string
   type: string
+  grape?: string
   country: string
   year: number
   averageRating: number
@@ -34,6 +35,7 @@ export interface CreateRatingRequest {
 export interface CreateWineRequest {
   name: string
   type: string
+  grape?: string
   country: string
   year: number
   description?: string

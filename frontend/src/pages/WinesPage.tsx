@@ -6,6 +6,7 @@ import { handleApiError } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
 
 const normalize = (value: string | number) => value.toString().toLowerCase().trim()
+const isPresent = (value: string | undefined): value is string => Boolean(value)
 const PAGE_SIZE = 10
 const WINE_TYPES = [
   { value: 'Red', label: 'Red' },
@@ -18,6 +19,7 @@ export const WinesPage = () => {
   const [wines, setWines] = useState<Wine[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
+  const [grapeFilter, setGrapeFilter] = useState('all')
   const [countryFilter, setCountryFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedWineId, setSelectedWineId] = useState<number | null>(null)
@@ -92,6 +94,7 @@ export const WinesPage = () => {
     const wine: CreateWineRequest = {
       name: String(formData.get('name') ?? '').trim(),
       type: String(formData.get('type') ?? '').trim(),
+      grape: String(formData.get('grape') ?? '').trim() || undefined,
       country: String(formData.get('country') ?? '').trim(),
       year: Number(formData.get('year')),
     }
@@ -122,6 +125,7 @@ export const WinesPage = () => {
     const wine: CreateWineRequest = {
       name: String(formData.get('name') ?? '').trim(),
       type: String(formData.get('type') ?? '').trim(),
+      grape: String(formData.get('grape') ?? '').trim() || undefined,
       country: String(formData.get('country') ?? '').trim(),
       year: Number(formData.get('year')),
     }
@@ -234,19 +238,29 @@ export const WinesPage = () => {
       typeFilter === 'all'
         ? searchedWines
         : searchedWines.filter((wine) => normalize(wine.type) === typeFilter)
+    const grapeFilteredWines =
+      grapeFilter === 'all'
+        ? visibleWines
+        : visibleWines.filter((wine) => wine.grape && normalize(wine.grape) === grapeFilter)
     const countryFilteredWines =
       countryFilter === 'all'
-        ? visibleWines
-        : visibleWines.filter((wine) => normalize(wine.country) === countryFilter)
+        ? grapeFilteredWines
+        : grapeFilteredWines.filter((wine) => normalize(wine.country) === countryFilter)
 
     return [...countryFilteredWines].sort((a, b) => {
       return b.averageRating - a.averageRating || b.ratingCount - a.ratingCount || a.name.localeCompare(b.name)
     })
-  }, [countryFilter, searchTerm, typeFilter, wines])
+  }, [countryFilter, grapeFilter, searchTerm, typeFilter, wines])
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [countryFilter, searchTerm, typeFilter])
+  }, [countryFilter, grapeFilter, searchTerm, typeFilter])
+
+  const wineGrapes = useMemo(
+    () => Array.from(new Set(wines.map((wine) => wine.grape).filter(isPresent)))
+      .sort((a, b) => a.localeCompare(b)),
+    [wines]
+  )
 
   const wineCountries = useMemo(
     () => Array.from(new Set(wines.map((wine) => wine.country).filter(Boolean)))
@@ -281,7 +295,7 @@ export const WinesPage = () => {
                   Browse wines
                 </h1>
                 <p className="mt-3 max-w-2xl text-[#c9b7ad]">
-                  Search wine by name. Filter by type or country.
+                  Search wine by name. Filter by type, grape and country.
                 </p>
               </div>
 
@@ -330,6 +344,7 @@ export const WinesPage = () => {
                   ))}
                 </select>
               </div>
+              <WineInput name="grape" label="Grape (optional)" required={false} />
               <WineInput name="country" label="Country" />
               <WineInput name="year" label="Year" type="number" />
               <button
@@ -342,7 +357,7 @@ export const WinesPage = () => {
             </form>
           )}
 
-          <div className="mb-6 grid gap-4 border border-[#2a191b] bg-[#0f0c0c] p-4 lg:grid-cols-[minmax(0,1fr)_220px_220px]">
+          <div className="mb-6 grid gap-4 border border-[#2a191b] bg-[#0f0c0c] p-4 lg:grid-cols-[minmax(0,1fr)_180px_180px_180px]">
             <label htmlFor="wine-search" className="sr-only">
               Search wines
             </label>
@@ -351,7 +366,7 @@ export const WinesPage = () => {
               type="search"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Search wine name"
+              placeholder="Search wine"
               className="w-full border border-[#3a2024] bg-[#080707] px-4 py-3 text-[#c9b7ad] outline-none placeholder:text-[#755f61] focus:border-[#7a1f2b]"
             />
             <div>
@@ -368,6 +383,24 @@ export const WinesPage = () => {
                 {WINE_TYPES.map((type) => (
                   <option key={type.value} value={normalize(type.value)}>
                     {type.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="wine-grape-filter" className="sr-only">
+                Filter by grape
+              </label>
+              <select
+                id="wine-grape-filter"
+                value={grapeFilter}
+                onChange={(event) => setGrapeFilter(event.target.value)}
+                className="w-full border border-[#3a2024] bg-[#080707] px-4 py-3 text-[#c9b7ad] outline-none focus:border-[#7a1f2b]"
+              >
+                <option value="all">All grapes</option>
+                {wineGrapes.map((grape) => (
+                  <option key={grape} value={normalize(grape)}>
+                    {grape}
                   </option>
                 ))}
               </select>
@@ -543,6 +576,12 @@ export const WinesPage = () => {
                     <dt>Type</dt>
                     <dd className="font-semibold text-[#d7a55d]">{selectedWine.type}</dd>
                   </div>
+                  {selectedWine.grape && (
+                    <div className="flex justify-between gap-4">
+                      <dt>Grape</dt>
+                      <dd className="font-semibold text-[#d7a55d]">{selectedWine.grape}</dd>
+                    </div>
+                  )}
                   <div className="flex justify-between gap-4">
                     <dt>Country</dt>
                     <dd className="font-semibold text-[#d7a55d]">{selectedWine.country}</dd>
@@ -592,6 +631,7 @@ export const WinesPage = () => {
                             ))}
                           </select>
                         </div>
+                        <WineInput idPrefix="edit-wine" name="grape" label="Grape (optional)" defaultValue={selectedWine.grape} required={false} />
                         <WineInput idPrefix="edit-wine" name="country" label="Country" defaultValue={selectedWine.country} />
                         <WineInput idPrefix="edit-wine" name="year" label="Year" type="number" defaultValue={selectedWine.year} />
 
@@ -795,6 +835,7 @@ const WineInput = ({
   defaultValue,
   idPrefix = 'wine',
   type = 'text',
+  required = true,
 }: {
   label: string
   name: string
@@ -802,6 +843,7 @@ const WineInput = ({
   defaultValue?: string | number
   idPrefix?: string
   type?: string
+  required?: boolean
 }) => (
   <div>
     <label htmlFor={`${idPrefix}-${name}`} className="block text-sm font-semibold text-[#d7a55d]">
@@ -815,7 +857,7 @@ const WineInput = ({
       max={type === 'number' ? new Date().getFullYear() : undefined}
       placeholder={placeholder}
       defaultValue={defaultValue}
-      required
+      required={required}
       className="mt-2 w-full border border-[#3a2024] bg-[#080707] px-4 py-3 text-[#c9b7ad] outline-none placeholder:text-[#755f61] focus:border-[#7a1f2b]"
     />
   </div>

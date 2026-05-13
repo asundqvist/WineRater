@@ -32,6 +32,14 @@ export const WineCard = ({ wine, onSelect, isSelected = false }: WineCardProps) 
           <h2 className="mt-2 text-2xl font-bold text-[#9f2f3e]">{wine.name}</h2>
           <p className="mt-2 text-sm uppercase tracking-[0.18em] text-[#c9b7ad]">
             {wine.type}
+            {wine.grape && (
+              <>
+                <span aria-hidden="true" className="mx-2 text-[#d7a55d]">
+                  &bull;
+                </span>
+                {wine.grape}
+              </>
+            )}
           </p>
         </div>
 
