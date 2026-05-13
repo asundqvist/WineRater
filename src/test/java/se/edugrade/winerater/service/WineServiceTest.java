@@ -112,7 +112,7 @@ class WineServiceTest {
     @Test
     void updateWineUpdatesExistingWineWhenNameIsAvailable() {
         Wine existing = wineWithId(1L, "Old Name");
-        Wine updated = new Wine("New Name", "Red", "Italy", 2022);
+        Wine updated = new Wine("New Name", "Red", "Sangiovese", "Italy", 2022);
         when(wineRepository.findById(1L)).thenReturn(Optional.of(existing));
         when(wineRepository.findByNameIgnoreCase("New Name")).thenReturn(Optional.empty());
         when(wineRepository.save(existing)).thenReturn(existing);
@@ -121,6 +121,7 @@ class WineServiceTest {
 
         assertThat(result.getName()).isEqualTo("New Name");
         assertThat(result.getType()).isEqualTo("Red");
+        assertThat(result.getGrape()).isEqualTo("Sangiovese");
         assertThat(result.getCountry()).isEqualTo("Italy");
         assertThat(result.getYear()).isEqualTo(2022);
     }

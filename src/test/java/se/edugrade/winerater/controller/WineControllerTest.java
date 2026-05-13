@@ -46,6 +46,7 @@ class WineControllerTest {
     @Test
     void getAllWinesReturnsWineResponsesWithRatingsSummary() throws Exception {
         Wine rioja = wineWithId(1L, "Rioja", "Red", "Spain", 2019);
+        rioja.setGrape("Tempranillo");
         Wine chablis = wineWithId(2L, "Chablis", "White", "France", 2021);
         when(wineService.getAllWineSummaries()).thenReturn(List.of(
                 new WineService.WineSummary(rioja, 4.5, 2),
@@ -56,6 +57,7 @@ class WineControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].name").value("Rioja"))
+                .andExpect(jsonPath("$[0].grape").value("Tempranillo"))
                 .andExpect(jsonPath("$[0].averageRating").value(4.5))
                 .andExpect(jsonPath("$[0].ratingCount").value(2))
                 .andExpect(jsonPath("$[1].name").value("Chablis"));
@@ -92,6 +94,7 @@ class WineControllerTest {
     @Test
     void createWineReturnsCreatedWineResponse() throws Exception {
         Wine saved = wineWithId(1L, "Sancerre", "White", "France", 2020);
+        saved.setGrape("Sauvignon Blanc");
         when(wineService.createWine(any(Wine.class))).thenReturn(saved);
 
         mockMvc.perform(post("/api/wines")
@@ -100,6 +103,7 @@ class WineControllerTest {
                                 {
                                   "name": "Sancerre",
                                   "type": "White",
+                                  "grape": "Sauvignon Blanc",
                                   "country": "France",
                                   "year": 2020
                                 }
@@ -107,6 +111,7 @@ class WineControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.name").value("Sancerre"))
+                .andExpect(jsonPath("$.grape").value("Sauvignon Blanc"))
                 .andExpect(jsonPath("$.averageRating").value(0.0))
                 .andExpect(jsonPath("$.ratingCount").value(0));
     }
