@@ -92,7 +92,7 @@ export const SessionExpiryWarning = () => {
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 max-w-sm border border-[#7a1f2b] bg-[#100d0d] px-5 py-4 shadow-2xl shadow-black/40">
+    <div className="fixed inset-x-4 bottom-4 z-50 border border-[#7a1f2b] bg-[#100d0d] px-5 py-4 shadow-2xl shadow-black/40 sm:left-auto sm:right-5 sm:max-w-sm">
       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#d7a55d]">
         Session expires soon
       </p>

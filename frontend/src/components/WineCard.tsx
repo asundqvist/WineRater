@@ -25,11 +25,11 @@ export const WineCard = ({ wine, onSelect, isSelected = false }: WineCardProps) 
       ].join(' ')}
     >
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#d7a55d]">
             {wine.country} / {wine.year}
           </p>
-          <h2 className="mt-2 text-2xl font-bold text-[#9f2f3e]">{wine.name}</h2>
+          <h2 className="mt-2 break-words text-xl font-bold text-[#9f2f3e] sm:text-2xl">{wine.name}</h2>
           <p className="mt-2 text-sm uppercase tracking-[0.18em] text-[#c9b7ad]">
             {wine.type}
             {wine.grape && (
@@ -43,8 +43,8 @@ export const WineCard = ({ wine, onSelect, isSelected = false }: WineCardProps) 
           </p>
         </div>
 
-        <div className="min-w-32 border-l border-[#3a2024] pl-5 sm:text-right">
-          <p className="text-3xl font-bold text-[#d7a55d]">
+        <div className="border-t border-[#3a2024] pt-4 sm:min-w-32 sm:border-l sm:border-t-0 sm:pl-5 sm:pt-0 sm:text-right">
+          <p className="text-2xl font-bold text-[#d7a55d] sm:text-3xl">
             {formatRating(wine.averageRating)}
           </p>
           <p className="mt-1 text-sm text-[#c9b7ad]">

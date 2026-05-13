@@ -33,7 +33,7 @@ export const LoginPage = () => {
   }
 
   return (
-    <main className="relative isolate flex flex-1 items-center overflow-hidden bg-[#080707] px-4 py-16">
+    <main className="relative isolate flex flex-1 items-center overflow-hidden bg-[#080707] px-4 py-10 sm:py-16">
       <div
         className="absolute inset-0 -z-20 bg-cover bg-center opacity-35"
         style={{
@@ -45,18 +45,18 @@ export const LoginPage = () => {
 
       <section className="mx-auto grid w-full max-w-5xl gap-10 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[#d7a55d]">
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#d7a55d] sm:text-sm sm:tracking-[0.35em]">
             Wine Rater
           </p>
-          <h1 className="mt-5 text-5xl font-bold leading-tight text-[#8f2634]">
+          <h1 className="mt-5 text-4xl font-bold leading-tight text-[#8f2634] sm:text-5xl">
             Welcome back!
           </h1>
-          <p className="mt-5 max-w-xl text-lg leading-8 text-[#c9b7ad]">
+          <p className="mt-5 max-w-xl text-base leading-7 text-[#c9b7ad] sm:text-lg sm:leading-8">
             Sign in to expand our collection with more wines and ratings!
           </p>
         </div>
 
-        <div className="border border-[#2a191b] bg-[#0f0c0c]/95 p-6 shadow-2xl shadow-black/30">
+        <div className="border border-[#2a191b] bg-[#0f0c0c]/95 p-4 shadow-2xl shadow-black/30 sm:p-6">
           <h2 className="text-2xl font-bold text-[#9f2f3e]">Login</h2>
           <p className="mt-2 text-sm text-[#c9b7ad]">Use your Wine Rater account.</p>
 

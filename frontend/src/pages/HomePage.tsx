@@ -36,28 +36,28 @@ export const HomePage = () => {
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#080707] via-[#080707]/90 to-[#080707]/55" />
       <div className="absolute inset-x-0 bottom-0 -z-10 h-48 bg-gradient-to-t from-[#080707] to-transparent" />
 
-      <section className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:px-8">
+      <section className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[minmax(0,1fr)_420px] lg:px-8">
         <div className="max-w-3xl">
-          <p className="mb-5 text-sm font-semibold uppercase tracking-[0.35em] text-[#d7a55d]">
+          <p className="mb-5 text-xs font-semibold uppercase tracking-[0.28em] text-[#d7a55d] sm:text-sm sm:tracking-[0.35em]">
             Wine Rater
           </p>
-          <h1 className="text-5xl font-bold leading-tight text-[#8f2634] sm:text-6xl lg:text-7xl">
+          <h1 className="text-4xl font-bold leading-tight text-[#8f2634] sm:text-6xl lg:text-7xl">
             Rate, discover and revisit memorable wines.
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-[#c9b7ad]">
+          <p className="mt-6 max-w-2xl text-base leading-7 text-[#c9b7ad] sm:text-lg sm:leading-8">
             A focused wine journal for browsing bottles, comparing ratings and exploring vineyards
           </p>
 
-          <div className="mt-10 flex flex-wrap gap-4">
+          <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
             <Link
               to="/wines"
-              className="rounded-full bg-[#7a1f2b] px-7 py-3 font-semibold text-[#100b0c] hover:bg-[#d7a55d]"
+              className="rounded-full bg-[#7a1f2b] px-7 py-3 text-center font-semibold text-[#100b0c] hover:bg-[#d7a55d]"
             >
               Wine List
             </Link>
             <Link
               to="/vineyards"
-              className="rounded-full border border-[#7a1f2b] px-7 py-3 font-semibold text-[#b84a58] hover:border-[#d7a55d] hover:text-[#d7a55d]"
+              className="rounded-full border border-[#7a1f2b] px-7 py-3 text-center font-semibold text-[#b84a58] hover:border-[#d7a55d] hover:text-[#d7a55d]"
             >
               Vineyards
             </Link>

@@ -319,15 +319,15 @@ export const WinesPage = () => {
         ))}
       </datalist>
 
-      <section className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:px-8">
+      <section className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-6 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8 lg:px-8">
         <div>
           <div className="mb-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[#d7a55d]">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#d7a55d] sm:text-sm sm:tracking-[0.35em]">
               Wine List
             </p>
             <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h1 className="text-4xl font-bold text-[#8f2634] sm:text-5xl">
+                <h1 className="text-3xl font-bold text-[#8f2634] sm:text-5xl">
                   Browse wines
                 </h1>
                 <p className="mt-3 max-w-2xl text-[#c9b7ad]">
@@ -345,7 +345,7 @@ export const WinesPage = () => {
                     setError('Sign in to add a wine')
                   }
                 }}
-                className="w-fit rounded-full border border-[#7a1f2b] px-5 py-2 text-sm font-semibold text-[#b84a58] hover:border-[#d7a55d] hover:text-[#d7a55d]"
+                className="w-full rounded-full border border-[#7a1f2b] px-5 py-3 text-sm font-semibold text-[#b84a58] hover:border-[#d7a55d] hover:text-[#d7a55d] sm:w-fit sm:py-2"
               >
                 {showAddWine ? 'Close form' : 'Add wine'}
               </button>
@@ -355,7 +355,7 @@ export const WinesPage = () => {
           {showAddWine && isAuthenticated && (
             <form
               onSubmit={handleAddWine}
-              className="mb-6 grid gap-4 border border-[#2a191b] bg-[#0f0c0c] p-5 sm:grid-cols-2"
+              className="mb-6 grid gap-4 border border-[#2a191b] bg-[#0f0c0c] p-4 sm:grid-cols-2 sm:p-5"
             >
               <div className="sm:col-span-2">
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#d7a55d]">
@@ -393,7 +393,7 @@ export const WinesPage = () => {
             </form>
           )}
 
-          <div className="mb-6 grid gap-4 border border-[#2a191b] bg-[#0f0c0c] p-4 lg:grid-cols-[minmax(0,1fr)_180px_180px_180px]">
+          <div className="mb-6 grid gap-3 border border-[#2a191b] bg-[#0f0c0c] p-4 sm:gap-4 lg:grid-cols-[minmax(0,1fr)_180px_180px_180px]">
             <label htmlFor="wine-search" className="sr-only">
               Search wines
             </label>
@@ -553,11 +553,11 @@ export const WinesPage = () => {
 
           {filteredWines.length > PAGE_SIZE && (
             <div className="mt-6 flex flex-col gap-4 border border-[#2a191b] bg-[#0f0c0c] p-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-[#c9b7ad]">
+              <p className="text-center text-sm text-[#c9b7ad] sm:text-left">
                 Showing {pageStartIndex + 1}-{Math.min(pageStartIndex + PAGE_SIZE, filteredWines.length)} of{' '}
                 {filteredWines.length}
               </p>
-              <div className="flex items-center gap-3">
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:flex">
                 <button
                   type="button"
                   onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
@@ -582,18 +582,18 @@ export const WinesPage = () => {
           )}
         </div>
 
-        <aside className="h-fit border border-[#2a191b] bg-[#0f0c0c] p-6 lg:sticky lg:top-28">
-          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#d7a55d]">
+        <aside className="h-fit border border-[#2a191b] bg-[#0f0c0c] p-4 sm:p-6 lg:sticky lg:top-28">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#d7a55d] sm:text-sm sm:tracking-[0.28em]">
             Summary
           </p>
 
-          <div className="mt-6 grid grid-cols-2 gap-4">
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4">
             <div className="border border-[#2a191b] p-4">
-              <p className="text-3xl font-bold text-[#9f2f3e]">{wines.length}</p>
+              <p className="text-2xl font-bold text-[#9f2f3e] sm:text-3xl">{wines.length}</p>
               <p className="mt-1 text-sm text-[#c9b7ad]">Total wines</p>
             </div>
             <div className="border border-[#2a191b] p-4">
-              <p className="text-3xl font-bold text-[#9f2f3e]">{paginatedWines.length}</p>
+              <p className="text-2xl font-bold text-[#9f2f3e] sm:text-3xl">{paginatedWines.length}</p>
               <p className="mt-1 text-sm text-[#c9b7ad]">On this page</p>
             </div>
           </div>
@@ -604,7 +604,7 @@ export const WinesPage = () => {
                 <p className="text-sm uppercase tracking-[0.22em] text-[#d7a55d]">
                   Selected wine
                 </p>
-                <h2 className="mt-3 text-2xl font-bold text-[#9f2f3e]">
+                <h2 className="mt-3 break-words text-xl font-bold text-[#9f2f3e] sm:text-2xl">
                   {selectedWine.name}
                 </h2>
                 <dl className="mt-5 space-y-3 text-sm text-[#c9b7ad]">
@@ -671,7 +671,7 @@ export const WinesPage = () => {
                         <WineInput idPrefix="edit-wine" name="country" label="Country" defaultValue={selectedWine.country} list="wine-country-options" />
                         <WineInput idPrefix="edit-wine" name="year" label="Year" type="number" defaultValue={selectedWine.year} />
 
-                        <div className="flex gap-3">
+                        <div className="flex flex-col gap-3 sm:flex-row">
                           <button
                             type="button"
                             onClick={() => setShowEditWine(false)}
@@ -689,7 +689,7 @@ export const WinesPage = () => {
                         </div>
                       </form>
                     ) : (
-                      <div className="mt-4 grid grid-cols-2 gap-3">
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
                         <button
                           type="button"
                           onClick={() => {
@@ -821,7 +821,7 @@ export const WinesPage = () => {
                           />
                         </div>
 
-                        <div className="flex gap-3">
+                        <div className="flex flex-col gap-3 sm:flex-row">
                           <button
                             type="button"
                             onClick={() => {
