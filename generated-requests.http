@@ -1,0 +1,229 @@
+### === TOKENS ===
+
+@adminToken = TOKEN
+@userToken = TOKEN
+
+### === ENDPOINTS ===
+
+@baseUrl = http://localhost:8080
+@auth = {{baseUrl}}/auth
+@wines = {{baseUrl}}/api/wines
+@ratings = {{baseUrl}}/api/ratings
+@weather = {{baseUrl}}/api/weather
+
+### === AUTH ===
+
+### Register new user -> should return 201
+POST {{auth}}/register
+Content-Type: application/json
+
+{
+  "username": "user",
+  "password": "password"
+}
+
+### Check username availability -> should return 200
+GET {{auth}}/username-available?username=user
+
+### Login as admin
+# @name adminLogin
+POST {{auth}}/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "password"
+}
+
+> {% client.global.set("adminToken", response.body.token); %}
+
+### Login as user
+# @name userLogin
+POST {{auth}}/login
+Content-Type: application/json
+
+{
+  "username": "user",
+  "password": "password"
+}
+
+> {% client.global.set("userToken", response.body.token); %}
+
+### === SERVER CHECK ===
+
+### Alive Controller -> should return 200
+GET {{baseUrl}}
+
+### Swagger UI -> should return 200
+GET {{baseUrl}}/swagger-ui/index.html
+
+### OpenAPI docs -> should return 200
+GET {{baseUrl}}/v3/api-docs
+
+### === WINES ===
+
+### Get all wines -> should return 200
+GET {{wines}}
+
+### Get wine by ID -> should return 200
+GET {{wines}}/1
+
+### Create wine as user -> should return 201
+POST {{wines}}
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "name": "Sancerre Test",
+  "type": "White",
+  "country": "France",
+  "year": 2021
+}
+
+### Create wine as admin -> should return 201
+POST {{wines}}
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Barolo Admin Test",
+  "type": "Red",
+  "country": "Italy",
+  "year": 2018
+}
+
+### Update wine as admin -> should return 200
+PUT {{wines}}/2
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Barolo Riserva Admin Test",
+  "type": "Red",
+  "country": "Italy",
+  "year": 2019
+}
+
+### Delete wine as admin -> should return 204
+DELETE {{wines}}/3
+Authorization: Bearer {{adminToken}}
+
+### === RATINGS ===
+
+### Get ratings for wine -> should return 200
+GET {{ratings}}/wine/1
+
+### Create rating as user -> should return 200
+POST {{ratings}}
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "score": 4.5,
+  "comment": "Fresh and balanced",
+  "wineId": 1
+}
+
+### Create rating as admin -> should return 200
+POST {{ratings}}
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "score": 5.0,
+  "comment": "Excellent wine",
+  "wineId": 1
+}
+
+### === WEATHER ===
+
+### Get default weather -> should return 200, default city Toledo
+GET {{weather}}
+
+### Get weather for Stockholm -> should return 200
+GET {{weather}}?city=Stockholm
+
+### Get weather for Gothenburg -> should return 200
+GET {{weather}}?city=Gothenburg
+
+### === ERROR CASES ===
+
+### 400: Register with too short username
+POST {{auth}}/register
+Content-Type: application/json
+
+{
+  "username": "ab",
+  "password": "password"
+}
+
+### 400: Register duplicate username
+POST {{auth}}/register
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "password"
+}
+
+### 400: Login with username that does not exist
+POST {{auth}}/login
+Content-Type: application/json
+
+{
+  "username": "missing-user",
+  "password": "password"
+}
+
+### 400: Login with incorrect password
+POST {{auth}}/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "wrong-password"
+}
+
+### 401: Create wine without token
+POST {{wines}}
+Content-Type: application/json
+
+{
+  "name": "Unauthorized Wine",
+  "type": "Red",
+  "country": "Spain",
+  "year": 2020
+}
+
+### 403: Delete wine as normal user
+DELETE {{wines}}/1
+Authorization: Bearer {{userToken}}
+
+### 404: Wine not found
+GET {{wines}}/999999
+
+### 400: Create wine with invalid year
+POST {{wines}}
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Invalid Year Wine",
+  "type": "Red",
+  "country": "France",
+  "year": 1800
+}
+
+### 400: Create rating with invalid score
+POST {{ratings}}
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "score": 6.0,
+  "comment": "Too high score",
+  "wineId": 1
+}
+
+### 404: Weather city not found
+GET {{weather}}?city=ThisCityShouldNotExist987
