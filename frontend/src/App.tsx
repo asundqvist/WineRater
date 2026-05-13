@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { Navbar } from './components/Navbar'
+import { SessionExpiryWarning } from './components/SessionExpiryWarning'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -11,6 +12,7 @@ function App() {
     <Router>
       <div className="flex min-h-screen flex-col bg-[#080707] text-[#7a1f2b]">
         <Navbar />
+        <SessionExpiryWarning />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />

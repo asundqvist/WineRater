@@ -37,6 +37,11 @@ export const wineService = {
     await api.delete(`/wines/${id}`)
   },
 
+  // Delete a rating
+  deleteRating: async (id: number): Promise<void> => {
+    await api.delete(`/ratings/${id}`)
+  },
+
   // Add a rating to a wine
   addRating: async (wineId: number, rating: CreateRatingRequest): Promise<Rating> => {
     const response = await api.post('/ratings', { ...rating, wineId })

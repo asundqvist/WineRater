@@ -27,6 +27,7 @@ export const WinesPage = () => {
   const [isSavingWine, setIsSavingWine] = useState(false)
   const [isSavingRating, setIsSavingRating] = useState(false)
   const [isDeletingWine, setIsDeletingWine] = useState(false)
+  const [deletingRatingId, setDeletingRatingId] = useState<number | null>(null)
   const [isLoadingRatings, setIsLoadingRatings] = useState(false)
   const [showAddWine, setShowAddWine] = useState(false)
   const [showEditWine, setShowEditWine] = useState(false)
@@ -229,6 +230,35 @@ export const WinesPage = () => {
     }
   }
 
+  const handleDeleteRating = async (rating: Rating) => {
+    if (!selectedWine) {
+      return
+    }
+
+    const username = rating.username || rating.user?.username || 'Unknown user'
+    const shouldDelete = window.confirm(`Delete rating from ${username}? This cannot be undone.`)
+    if (!shouldDelete) {
+      return
+    }
+
+    setError('')
+    setSuccessMessage('')
+    setDeletingRatingId(rating.id)
+
+    try {
+      await wineService.deleteRating(rating.id)
+      setRatings((current) => current.filter((item) => item.id !== rating.id))
+      await loadWines()
+      setSelectedWineId(selectedWine.id)
+      setSuccessMessage(`Rating from ${username} was deleted`)
+    } catch (err) {
+      const apiError = handleApiError(err)
+      setError(apiError.message)
+    } finally {
+      setDeletingRatingId(null)
+    }
+  }
+
   const filteredWines = useMemo(() => {
     const query = normalize(searchTerm)
     const searchedWines = query
@@ -283,6 +313,12 @@ export const WinesPage = () => {
 
   return (
     <main className="flex flex-1 bg-[#080707]">
+      <datalist id="wine-country-options">
+        {wineCountries.map((country) => (
+          <option key={country} value={country} />
+        ))}
+      </datalist>
+
       <section className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:px-8">
         <div>
           <div className="mb-8">
@@ -345,7 +381,7 @@ export const WinesPage = () => {
                 </select>
               </div>
               <WineInput name="grape" label="Grape (optional)" required={false} />
-              <WineInput name="country" label="Country" />
+              <WineInput name="country" label="Country" list="wine-country-options" />
               <WineInput name="year" label="Year" type="number" />
               <button
                 type="submit"
@@ -632,7 +668,7 @@ export const WinesPage = () => {
                           </select>
                         </div>
                         <WineInput idPrefix="edit-wine" name="grape" label="Grape (optional)" defaultValue={selectedWine.grape} required={false} />
-                        <WineInput idPrefix="edit-wine" name="country" label="Country" defaultValue={selectedWine.country} />
+                        <WineInput idPrefix="edit-wine" name="country" label="Country" defaultValue={selectedWine.country} list="wine-country-options" />
                         <WineInput idPrefix="edit-wine" name="year" label="Year" type="number" defaultValue={selectedWine.year} />
 
                         <div className="flex gap-3">
@@ -712,7 +748,7 @@ export const WinesPage = () => {
                         ratings.map((rating) => (
                           <div key={rating.id} className="border border-[#2a191b] bg-[#080707] p-4">
                             <div className="flex items-start justify-between gap-4">
-                              <div>
+                              <div className="min-w-0">
                                 <p className="text-sm font-semibold text-[#d7a55d]">
                                   {rating.username || rating.user?.username || 'Unknown user'}
                                 </p>
@@ -726,6 +762,16 @@ export const WinesPage = () => {
                                 {Number(rating.score).toFixed(1)}
                               </p>
                             </div>
+                            {isAdmin && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteRating(rating)}
+                                disabled={deletingRatingId === rating.id}
+                                className="mt-4 rounded-full border border-[#7a1f2b] px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#b84a58] hover:border-[#d7a55d] hover:text-[#d7a55d] disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {deletingRatingId === rating.id ? 'Deleting...' : 'Delete rating'}
+                              </button>
+                            )}
                           </div>
                         ))
                       )}
@@ -836,6 +882,7 @@ const WineInput = ({
   idPrefix = 'wine',
   type = 'text',
   required = true,
+  list,
 }: {
   label: string
   name: string
@@ -844,6 +891,7 @@ const WineInput = ({
   idPrefix?: string
   type?: string
   required?: boolean
+  list?: string
 }) => (
   <div>
     <label htmlFor={`${idPrefix}-${name}`} className="block text-sm font-semibold text-[#d7a55d]">
@@ -857,6 +905,7 @@ const WineInput = ({
       max={type === 'number' ? new Date().getFullYear() : undefined}
       placeholder={placeholder}
       defaultValue={defaultValue}
+      list={list}
       required={required}
       className="mt-2 w-full border border-[#3a2024] bg-[#080707] px-4 py-3 text-[#c9b7ad] outline-none placeholder:text-[#755f61] focus:border-[#7a1f2b]"
     />
