@@ -59,4 +59,4 @@ jobs:
         run: railway up --ci --environment "$RAILWAY_ENVIRONMENT" --service "${{ secrets.RAILWAY_BACKEND_SERVICE }}"
 
       - name: Deploy frontend to Railway
-        run: railway up frontend --path-as-root --ci --environment "$RAILWAY_ENVIRONMENT" --service "${{ secrets.RAILWAY_FRONTEND_SERVICE }}"
+        run: railway up --ci --environment "$RAILWAY_ENVIRONMENT" --service "${{ secrets.RAILWAY_FRONTEND_SERVICE }}"
