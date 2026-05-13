@@ -6,6 +6,7 @@ public record WineDetailsResponse(
         Long id,
         String name,
         String type,
+        String grape,
         String country,
         int year,
         double averageRating,

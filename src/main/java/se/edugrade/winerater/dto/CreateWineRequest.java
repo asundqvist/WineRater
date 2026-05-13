@@ -11,6 +11,8 @@ public record CreateWineRequest(
         @NotBlank(message = "Type is required")
         String type,
 
+        String grape,
+
         @NotBlank(message = "Country is required")
         String country,
 

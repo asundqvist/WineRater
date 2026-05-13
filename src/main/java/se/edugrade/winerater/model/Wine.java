@@ -21,6 +21,7 @@ public class Wine {
     @Column(nullable = false, unique = true)
     private String name;
     private String type;
+    private String grape;
     private String country;
     private int year;
 
@@ -31,6 +32,14 @@ public class Wine {
     public Wine(String name, String type, String country, int year) {
         this.name = name;
         this.type = type;
+        this.country = country;
+        this.year = year;
+    }
+
+    public Wine(String name, String type, String grape, String country, int year) {
+        this.name = name;
+        this.type = type;
+        this.grape = grape;
         this.country = country;
         this.year = year;
     }

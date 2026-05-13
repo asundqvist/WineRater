@@ -88,6 +88,7 @@ public class WineService {
 
         existingWine.setName(updatedWine.getName());
         existingWine.setType(updatedWine.getType());
+        existingWine.setGrape(updatedWine.getGrape());
         existingWine.setCountry(updatedWine.getCountry());
         existingWine.setYear(updatedWine.getYear());
 

@@ -12,6 +12,7 @@ public class WineMapper {
                 wine.getId(),
                 wine.getName(),
                 wine.getType(),
+                wine.getGrape(),
                 wine.getCountry(),
                 wine.getYear(),
                 averageRating,
@@ -24,6 +25,7 @@ public class WineMapper {
                 wine.getId(),
                 wine.getName(),
                 wine.getType(),
+                wine.getGrape(),
                 wine.getCountry(),
                 wine.getYear(),
                 averageRating,
@@ -37,8 +39,17 @@ public class WineMapper {
         return new Wine(
                 request.name(),
                 request.type(),
+                blankToNull(request.grape()),
                 request.country(),
                 request.year()
         );
+    }
+
+    private static String blankToNull(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        return value.trim();
     }
 }
