@@ -1,8 +1,8 @@
 # WineRater
 
-WineRater är en fullstack-applikation för att hantera viner och betyg. Projektet består av en Spring Boot-backend, en MySQL-databas och en React/Vite-frontend.
+WineRater är en fullstack-applikation för att hantera viner, betyg och vingårdsrelaterat väder. Projektet består av en Spring Boot-backend, en React/Vite-frontend och en MySQL-databas.
 
-Frontend är fortfarande under utveckling. Backend, databas, tester och Docker-grunden är prioriterade i nuläget.
+Applikationen är dockeriserad, kan köras lokalt med Docker Compose och är anpassad för deployment på Railway.
 
 ## Tech Stack
 
@@ -11,10 +11,11 @@ Frontend är fortfarande under utveckling. Backend, databas, tester och Docker-g
 - Spring Security med JWT
 - Spring Data JPA
 - MySQL
-- Open-Meteo weather API
+- React, TypeScript och Vite
+- Tailwind CSS
+- Open-Meteo Weather API
 - Docker och Docker Compose
 - GitHub Actions
-- React, TypeScript och Vite
 
 ## Projektstruktur
 
@@ -23,47 +24,67 @@ Frontend är fortfarande under utveckling. Backend, databas, tester och Docker-g
 ├── src/                  Backend-kod och backend-README
 ├── frontend/             Frontend-kod och frontend-README
 ├── .github/workflows/    CI-pipeline
-├── docker-compose.yml    Backend + MySQL
+├── docker-compose.yml    Frontend + backend + MySQL
 ├── Dockerfile            Backend image
+├── .env.example          Exempel på lokala miljövariabler
+├── documentation/        Reflektion och övrig dokumentation
 └── README.md             Övergripande instruktioner
 ```
 
+## Funktioner
+
+- Registrering och inloggning med JWT.
+- Roller för `USER` och `ADMIN`.
+- Lista, filtrera, skapa och betygsätta viner.
+- Viner kan ha en valfri druva, exempelvis Pinot Noir eller Chardonnay.
+- Admin kan uppdatera och radera viner.
+- Vädervy för vingårdar och valfri stad.
+- Backend hämtar väderdata från Open-Meteo.
+- Frontend visar nuvarande väder och tre dagars prognos.
+
 ## Förutsättningar
 
-- Java 21
 - Docker Desktop
 - Git
-- Node.js 20+ om frontend ska köras lokalt
+- Java 21 om backend ska köras utan Docker
+- Node.js 20+ om frontend ska köras utan Docker
 
-## Köra Med Docker Compose
+## Lokal Körning Med Docker Compose
 
-Sätt först miljövariabler för de känsliga värdena.
-
-PowerShell:
+1. Skapa en lokal `.env` från exemplet:
 
 ```powershell
-$env:DB_PASSWORD="password"
-$env:JWT_SECRET="REPLACE_WITH_YOUR_OWN_JWT_SECRET"
-$env:JWT_EXPIRATION_MS="900000"
+Copy-Item .env.example .env
+```
+
+2. Starta hela applikationen:
+
+```powershell
 docker compose up --build
 ```
 
-Backend startar på:
+Frontend:
+
+```text
+http://localhost:5173
+```
+
+Backend:
 
 ```text
 http://localhost:8080
 ```
 
-MySQL exponeras på:
-
-```text
-localhost:3306
-```
-
-Swagger/OpenAPI nås normalt via:
+Swagger/OpenAPI:
 
 ```text
 http://localhost:8080/swagger-ui.html
+```
+
+MySQL exponeras lokalt på:
+
+```text
+localhost:3306
 ```
 
 Stoppa containrarna:
@@ -72,27 +93,62 @@ Stoppa containrarna:
 docker compose down
 ```
 
-Stoppa containrarna och ta bort databasvolymen:
+Stoppa containrarna och radera lokal databasvolym:
 
 ```powershell
 docker compose down -v
 ```
 
-## Köra Tester
+## Miljövariabler
 
-Backendtester körs med:
+Lokalt används `.env` av Docker Compose. `.env` ska inte commitas.
+
+Viktiga lokala variabler:
+
+```env
+MYSQL_DATABASE=winerater_db
+DB_USERNAME=root
+DB_PASSWORD=password
+BACKEND_DB_URL=jdbc:mysql://db:3306/winerater_db
+JWT_SECRET=REPLACE_WITH_YOUR_OWN_JWT_SECRET
+JWT_EXPIRATION_MS=3600000
+FRONTEND_API_URL=http://localhost:8080/api
+FRONTEND_AUTH_URL=http://localhost:8080/auth
+```
+
+På Railway sätts motsvarande värden i respektive service. Backend behöver till exempel:
+
+```env
+SPRING_DATASOURCE_URL=jdbc:mysql://${{MySQL.MYSQLHOST}}:${{MySQL.MYSQLPORT}}/${{MySQL.MYSQLDATABASE}}
+SPRING_DATASOURCE_USERNAME=${{MySQL.MYSQLUSER}}
+SPRING_DATASOURCE_PASSWORD=${{MySQL.MYSQLPASSWORD}}
+JWT_SECRET=REPLACE_WITH_YOUR_OWN_JWT_SECRET
+JWT_EXPIRATION_MS=3600000
+CORS_ALLOWED_ORIGINS=https://winerater.up.railway.app
+```
+
+Frontend på Railway behöver:
+
+```env
+VITE_API_BASE_URL=https://winerater-production.up.railway.app/api
+VITE_AUTH_BASE_URL=https://winerater-production.up.railway.app/auth
+```
+
+## Tester Och Build
+
+Backendtester:
 
 ```powershell
-.\mvnw.cmd test
+.\mvnw.cmd clean verify
 ```
 
-På Linux/macOS:
+Frontend build:
 
-```bash
-./mvnw test
+```powershell
+cd frontend
+npm install
+npm run build
 ```
-
-Testsviten innehåller repository-tester, service-tester, controller-tester och integrationstester.
 
 ## CI/CD
 
@@ -102,16 +158,35 @@ GitHub Actions finns i:
 .github/workflows/maven.yml
 ```
 
-Pipelinen kör backendtester vid push och pull request mot `main`.
+Pipelinen kör backendtester, frontend-build och `docker compose build` vid push och pull request mot `main`. Docker-steget verifierar att applikationens images kan byggas från projektets Dockerfiles. Vid push till `main` deployas backend och frontend till Railway efter lyckad build.
 
-## Delar
+Följande GitHub Actions-secrets behövs för deployment:
 
-- Backend: se [src/README.md](src/README.md)
-- Frontend: se [frontend/README.md](frontend/README.md)
+```text
+RAILWAY_TOKEN
+RAILWAY_BACKEND_SERVICE
+RAILWAY_FRONTEND_SERVICE
+```
 
-## Status
+## Deployment
 
-- Backend: funktionell med JWT, validering, MySQL och tester.
-- Väderintegration: backend hämtar väderdata från Open-Meteo via `GET /api/weather?city=...`.
-- Databas: MySQL via Docker Compose.
-- Frontend: work in progress och ska färdigställas senare.
+Applikationen är deployad till Railway med separata services för:
+
+- backend
+- frontend
+- MySQL
+
+Publika Railway-URL:er:
+
+```text
+Frontend: https://winerater.up.railway.app/
+Backend: https://winerater-production.up.railway.app/
+```
+
+Vid demo ska frontendens Railway-URL öppnas i webbläsaren. Frontend anropar backendens publika Railway-URL, och backend använder Railway MySQL.
+
+## Dokumentation För Delarna
+
+- Backend: [src/README.md](src/README.md)
+- Frontend: [frontend/README.md](frontend/README.md)
+- Reflektion: [documentation/personal_reflections.md](documentation/personal_reflections.md)

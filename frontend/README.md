@@ -1,8 +1,6 @@
 # Frontend
 
-Frontenddelen är en React/Vite-applikation för WineRater.
-
-Denna del är fortfarande work in progress och ska färdigställas senare. Backend och databas kan användas och testas separat under tiden.
+Frontenddelen är en React/Vite-applikation för WineRater. Den används för att registrera/logga in användare, visa viner, skapa betyg, hantera adminfunktioner och visa väderdata för vingårdar/städer.
 
 ## Teknik
 
@@ -11,37 +9,45 @@ Denna del är fortfarande work in progress och ska färdigställas senare. Backe
 - Vite
 - Tailwind CSS
 - Axios
+- Nginx för produktionsimage
+
+## Funktioner
+
+- Registrering och inloggning.
+- Sessionbaserad auth-lagring med `sessionStorage`.
+- Lista och filtrera viner efter typ, land och druva.
+- Skapa vin som inloggad användare.
+- Lägga betyg på vin.
+- Admin kan uppdatera och radera vin.
+- Vädervy med Open-Meteo-data via backend.
+- Sök väder för valfri stad.
+- Visa nuvarande väder och tre dagars prognos.
 
 ## Förutsättningar
 
 - Node.js 20+
 - npm
-- Backend körd på `http://localhost:8080`
+- Backend körd på `http://localhost:8080` vid lokal utveckling
 
 ## Miljövariabler
 
-Frontend läser backendens API-adress från:
+Frontend behöver veta var backend finns.
 
-```text
-VITE_API_BASE_URL
-VITE_AUTH_BASE_URL
-```
+Lokal utveckling:
 
-För lokal körning kan värdet vara:
-
-```text
+```env
 VITE_API_BASE_URL=http://localhost:8080/api
 VITE_AUTH_BASE_URL=http://localhost:8080/auth
 ```
 
-När frontend senare körs via Docker Compose kan värdet i stället peka på backend-servicen, exempelvis:
+Railway:
 
-```text
-VITE_API_BASE_URL=http://backend:8080/api
-VITE_AUTH_BASE_URL=http://backend:8080/auth
+```env
+VITE_API_BASE_URL=https://winerater-production.up.railway.app/api
+VITE_AUTH_BASE_URL=https://winerater-production.up.railway.app/auth
 ```
 
-Se `.env.example` för exempel.
+Eftersom Vite bygger in `VITE_*`-variabler vid build behöver frontend byggas om efter ändring av dessa värden.
 
 ## Installera Beroenden
 
@@ -73,22 +79,40 @@ npm run build
 npm run preview
 ```
 
-## Status
+## Docker
 
-Frontend är inte färdig och ska justeras senare. Den här README-filen beskriver hur frontenddelen är tänkt att köras när arbetet fortsätter.
+Frontendens Dockerfile ligger i:
 
-## Planerad Vineyard/Väder-Sida
+```text
+frontend/Dockerfile
+```
 
-Frontend ska senare få en separat sida eller flik, exempelvis `Vineyard`.
+Produktionsimagen bygger React-appen och serverar `dist` via Nginx på port `80`.
 
-Frontend ansvarar för:
+Bygg bara frontend-imagen från projektroten:
 
-- lista några kända vingårdar
-- visa vilken stad/region vingården ligger i
-- ha ett inputfält där användaren kan söka på valfri stad
-- anropa backend via `GET /api/weather?city=<stad>`
-- visa nuvarande väder: stad, land, tid, temperatur, vindhastighet och väderkod
-- visa tre dagars prognos med min-/maxtemperatur och väderkod
-- visa tydligt att väderdata kommer från Open-Meteo
+```powershell
+docker compose build frontend
+docker compose up -d frontend
+```
 
-Backend ansvarar för själva kopplingen till vädertjänsten.
+Tvinga ny build utan cache:
+
+```powershell
+docker compose build --no-cache frontend
+docker compose up -d frontend
+```
+
+## Railway
+
+Frontend körs som separat Railway-service.
+
+Rekommenderad konfiguration:
+
+```text
+Root Directory: frontend
+Dockerfile: Dockerfile
+Public domain target port: 80
+```
+
+Backendens `CORS_ALLOWED_ORIGINS` måste innehålla frontendens publika Railway-URL.
